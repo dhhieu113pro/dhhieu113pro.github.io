@@ -21,8 +21,8 @@ The page is screenshot-led. Real product captures are the primary content, with 
 
 ### Visual language
 
-- Dark default product identity based on the extension's navy/graphite popup UI.
-- Light mode uses a cool off-white rather than pure white.
+- The product identity is based on the extension's navy/graphite popup UI.
+- Theme mode defaults to System, matching the root site. In dark mode the page uses the navy/graphite product palette; in light mode it uses a cool off-white palette that preserves the same hierarchy.
 - Electric blue is the main accent and remains restrained.
 - Green is reserved for local/protected/active states.
 - Red is reserved for destructive/error states.
@@ -190,7 +190,7 @@ Hallmark mobile verification widths are mandatory: 320, 375, 414, and 768 px.
 
 ## Source assets
 
-Use the already generated and visually verified Edge Store screenshot artifact from the AI Vision Ad Blocker CI.
+Use the already generated and visually verified Edge Store screenshot artifact from AI Vision Ad Blocker CI run `32648744945`, artifact `9495598136` (`edge-store-screenshots-32648744945`).
 
 Required files:
 
@@ -229,7 +229,7 @@ to:
 
 `./adblocker/`
 
-Update the card copy to accurately describe the current product, for example:
+Set the homepage card description exactly to:
 
 > Local browser protection using rules, heuristics and on-device AI.
 
