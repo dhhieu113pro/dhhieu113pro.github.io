@@ -35,13 +35,24 @@ jobs:
           ref: main
           path: quay-source
 
+      - name: Checkout LocalCodingMcp
+        uses: actions/checkout@v4
+        with:
+          repository: dhhieu113pro/local-coding-mcp
+          ref: main
+          path: local-coding-mcp-source
+
       - name: Assemble site
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p site/quay
+          mkdir -p site/quay site/local-coding-mcp
           cp pages/index.html site/index.html
           cp -R quay-source/docs/. site/quay/
+          cp -R local-coding-mcp-source/docs/. site/local-coding-mcp/
+          test -f site/local-coding-mcp/index.html
+          test -f site/local-coding-mcp/logo.svg
+          test -f site/local-coding-mcp/how-it-works.svg
           touch site/.nojekyll
 
       - name: Configure Pages
