@@ -3,6 +3,8 @@ name: Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "17 3 * * *"
@@ -13,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,23 +37,37 @@ jobs:
           ref: main
           path: quay-source
 
+      - name: Checkout Butchi
+        uses: actions/checkout@v4
+        with:
+          repository: dhhieu113pro/butchi
+          ref: main
+          path: butchi-source
+
       - name: Assemble site
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p site/quay
+          mkdir -p site/quay site/butchi
           cp pages/index.html site/index.html
           cp -R quay-source/docs/. site/quay/
+          cp -R butchi-source/docs/. site/butchi/
+          test -f site/index.html
+          test -f site/quay/index.html
+          test -f site/butchi/index.html
           touch site/.nojekyll
 
       - name: Configure Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
       - name: Deploy
+        if: github.event_name != 'pull_request'
         id: deployment
         uses: actions/deploy-pages@v4
