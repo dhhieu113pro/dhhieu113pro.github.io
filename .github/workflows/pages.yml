@@ -52,6 +52,22 @@ jobs:
           cp pages/index.html site/index.html
           cp -R quay-source/docs/. site/quay/
           cp -R butchi-source/docs/. site/butchi/
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('site/index.html')
+          html = path.read_text(encoding='utf-8')
+          html = html.replace(
+              'href="https://github.com/dhhieu113pro/butchi">View Butchi →</a>',
+              'href="./butchi/">Explore Butchi →</a>',
+              1,
+          )
+          html = html.replace(
+              'https://raw.githubusercontent.com/dhhieu113pro/butchi/main/docs/assets/screenshot-popover.svg',
+              './butchi/shots/popover-light.png',
+              1,
+          )
+          path.write_text(html, encoding='utf-8')
+          PY
           test -f site/index.html
           test -f site/quay/index.html
           test -f site/butchi/index.html
