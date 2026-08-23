@@ -35,13 +35,24 @@ jobs:
           ref: main
           path: quay-source
 
+      - name: Checkout Butchi
+        uses: actions/checkout@v4
+        with:
+          repository: dhhieu113pro/butchi
+          ref: main
+          path: butchi-source
+
       - name: Assemble site
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p site/quay
+          mkdir -p site/quay site/butchi
           cp pages/index.html site/index.html
           cp -R quay-source/docs/. site/quay/
+          cp -R butchi-source/docs/. site/butchi/
+          test -f site/index.html
+          test -f site/quay/index.html
+          test -f site/butchi/index.html
           touch site/.nojekyll
 
       - name: Configure Pages
