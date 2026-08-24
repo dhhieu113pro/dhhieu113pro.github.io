@@ -27,7 +27,12 @@ test('publishes a grounded Workbench landing page with the real Store action', a
   await expect(page.getByText('page heuristics', { exact: true })).toBeVisible();
   await expect(page.getByText('local image classification', { exact: true })).toBeVisible();
   await expect(page.getByText(/MobileNetV4/)).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Get for Microsoft Edge ↗', exact: true })).toHaveAttribute('href', storeUrl);
+
+  const storeLinks = page.getByRole('link', { name: 'Get for Microsoft Edge ↗', exact: true });
+  await expect(storeLinks).toHaveCount(2);
+  await expect(storeLinks.first()).toHaveAttribute('href', storeUrl);
+  await expect(storeLinks.nth(1)).toHaveAttribute('href', storeUrl);
+
   await expect(page.getByRole('link', { name: 'GitHub ↗', exact: true }).first()).toHaveAttribute(
     'href',
     'https://github.com/dhhieu113pro/adblocker-extension'
