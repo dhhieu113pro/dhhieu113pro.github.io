@@ -1,17 +1,22 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 
 const widths = [320, 375, 414, 768, 1280];
 const storeUrl = 'https://microsoftedge.microsoft.com/addons/detail/ai-vision-ad-blocker/oojihjhomcbmbkbhdjldojjhgpejddfm';
 const screenshots = [
-  ['01-overview.png', 1280, 800],
-  ['02-settings.png', 1280, 800],
-  ['03-history.png', 1280, 800],
+  ['01-overview.png', 1280, 800, '008e1c837de1f6f68503f7d11aee7a04725f57a39ea8d450b4c6ba0b616476ab'],
+  ['02-settings.png', 1280, 800, '728d342ca058efd9876e1ce849663182746afaa1e6f6da56cf6988bdb0b3e4c3'],
+  ['03-history.png', 1280, 800, '43f12bf226f4c6b56379e3981a507b43df77d22040d52aab677fd4ea18bf43df'],
 ];
 
 function pngSize(buffer) {
   expect(buffer.subarray(1, 4).toString('ascii')).toBe('PNG');
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+}
+
+function sha256(buffer) {
+  return createHash('sha256').update(buffer).digest('hex');
 }
 
 test('publishes a grounded Workbench landing page with the real Store action', async ({ page }) => {
@@ -30,12 +35,13 @@ test('publishes a grounded Workbench landing page with the real Store action', a
   await expect(page.getByText(/trusted by|10×|10x|best ad blocker/i)).toHaveCount(0);
 });
 
-test('uses the three pinned 1280x800 screenshots', async ({ page }) => {
+test('uses the exact three pinned 1280x800 screenshots', async ({ page }) => {
   await page.goto('/adblocker/');
-  for (const [name, width, height] of screenshots) {
+  for (const [name, width, height, digest] of screenshots) {
     await expect(page.locator(`img[src="./assets/${name}"]`)).toBeVisible();
     const data = await readFile(`adblocker/assets/${name}`);
     expect(pngSize(data)).toEqual({ width, height });
+    expect(sha256(data)).toBe(digest);
   }
 });
 
