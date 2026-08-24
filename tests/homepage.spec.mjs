@@ -8,5 +8,6 @@ test('routes the Adblocker project card to the product landing page', async ({ p
   await expect(card).toHaveAttribute('href', './adblocker/');
   await expect(card.getByRole('heading', { name: 'Adblocker', exact: true })).toBeVisible();
   await expect(card.getByText('Local browser protection using rules, heuristics and on-device AI.', { exact: true })).toBeVisible();
+  await expect(card.getByText('Browser · AI', { exact: true })).toBeVisible();
   await expect(card.getByText('Explore →', { exact: true })).toBeVisible();
 });
