@@ -25,19 +25,49 @@ jobs:
       - name: Checkout Pages
         uses: actions/checkout@v4
 
+      - name: Checkout pinned Ad Blocker UI source
+        uses: actions/checkout@v4
+        with:
+          repository: dhhieu113pro/adblocker-extension
+          ref: 7c50e4b731897b65fa3aab6dd72124a7e94b47ce
+          path: adblocker-source
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install Playwright test runner
-        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+      - name: Generate pinned Microsoft Edge Store screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd adblocker-source
+          npm ci
+          npm run build
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+          node scripts/generate-edge-store-screenshots.mjs
+          cd ..
+          mkdir -p adblocker/assets
+          cp adblocker-source/artifacts/edge-store/01-overview.png adblocker/assets/01-overview.png
+          cp adblocker-source/artifacts/edge-store/02-settings.png adblocker/assets/02-settings.png
+          cp adblocker-source/artifacts/edge-store/03-history.png adblocker/assets/03-history.png
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Pages Playwright test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
 
       - name: Run landing-page browser contract
         run: npx playwright test
+
+      - name: Upload generated Store screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adblocker-store-screenshots-${{ github.run_id }}
+          path: adblocker/assets/*.png
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Upload Playwright diagnostics
         if: always()
