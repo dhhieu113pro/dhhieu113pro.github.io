@@ -58,7 +58,7 @@ test('audio: a fresh story synthesizes every sentence and writes the hash', () =
   assert.equal(result.failed, 0);
   assert.equal(t.calls.cli.length, 2);
   assert.deepEqual(t.calls.cli[0].slice(0, 2), ['--text', 'Một.']);
-  assert.ok(t.calls.cli[0].includes('duc_tri'));
+  assert.ok(t.calls.cli[0].includes('/models/voices/duc_tri'));
   assert.equal(fs.readFileSync(path.join(s.outDir, 'assets/audio/a-story/.text'), 'utf8'), sentenceHash(s.record));
   assert.equal(fs.existsSync(path.join(s.outDir, 'assets/audio/a-story/000.mp3')), true);
   assert.equal(fs.existsSync(path.join(s.outDir, 'assets/audio/a-story/001.mp3')), true);
@@ -107,9 +107,41 @@ test('audio: a missing binary fails with an actionable message', () => {
   assert.ok(messages.some((m) => /vieneu/.test(m) && /\/no\/such\/vieneu/.test(m)), messages.join('\n'));
 });
 
+test('audio: a long sentence is synthesized in pieces and joined into one mp3', () => {
+  const long = 'Tôi mới kết hôn chưa đầy sáu tháng mà mỗi ngày về nhà là cảm thấy nặng nề trong lòng, không dám than thở với chồng vì sợ anh khó xử giữa mẹ và vợ.';
+  assert.ok(long.length > 110);
+  const s = setup(long);
+  const t = tools();
+  const result = run(bare({ ...s, ...t }));
+  assert.equal(result.failed, 0);
+  assert.ok(t.calls.cli.length > 1, `cli calls: ${t.calls.cli.length}`);
+  assert.equal(t.calls.cli.map((a) => a[a.indexOf('--text') + 1]).join(' '), long);
+  assert.equal(t.calls.ffmpeg.length, 1);
+  assert.equal(fs.existsSync(path.join(s.outDir, 'assets/audio/a-story/000.mp3')), true);
+  assert.equal(fs.existsSync(path.join(s.outDir, 'assets/audio/a-story/001.mp3')), false);
+});
+
+test('audio: speechPieces keeps short text whole and never exceeds the cap', () => {
+  const { speechPieces } = require('./audio');
+  assert.deepEqual(speechPieces('Một. Hai.'), ['Một. Hai.']);
+  const long = 'Aaa, bbb ccc ddd, eee fff ggg hhh iii jjj kkk lll, mmm nnn ooo ppp qqq rrr sss ttt uuu vvv www xxx yyy zzz.';
+  const pieces = speechPieces(long, 40);
+  assert.ok(pieces.length > 1);
+  assert.equal(pieces.join(' '), long);
+  for (const piece of pieces) assert.ok(piece.length <= 40, `${piece.length}: ${piece}`);
+});
+
+test('audio: the environment carries absolute g2p dict and library paths', () => {
+  const { environment } = require('./audio');
+  const env = environment();
+  for (const key of ['SEA_G2P_BIN', 'SEA_G2P_LIB', 'ORT_DYLIB_PATH']) {
+    assert.equal(path.isAbsolute(env[key]), true, `${key}=${env[key]}`);
+  }
+});
+
 test('audio: a voice override reaches the CLI', () => {
   const s = setup('Tôi có bạn gái.', { 'a-story': { voice: 'kim_thanh' } });
   const t = tools();
   run(bare({ ...s, ...t }));
-  assert.ok(t.calls.cli[0].includes('kim_thanh'));
+  assert.ok(t.calls.cli[0].includes('/models/voices/kim_thanh'));
 });
