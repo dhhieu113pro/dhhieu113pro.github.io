@@ -115,15 +115,32 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
   for (const story of stories) {
     const dir = path.join(postsDir, story.slug);
     fs.mkdirSync(dir, { recursive: true });
-    const partsHtml = story.parts.map((part) => `    <section class="part">
-${part.image ? `      <img class="part-image" src="${esc(part.image)}" alt="">\n` : ''}      <p class="part-text">${esc(part.text)}</p>
-    </section>`).join('\n');
+    const cardsHtml = story.parts.map((part) => `      <section class="reader-card">
+        <div class="card-media">${part.image ? `<img class="card-image" src="${esc(part.image)}" alt="">` : ''}</div>
+        <div class="card-body"><p class="card-text">${esc(part.text)}</p></div>
+      </section>`).join('\n');
+    const dotsHtml = story.parts.map((part, index) =>
+      `        <button class="reader-dot" type="button" aria-label="Phần ${index + 1}"${index === 0 ? ' aria-current="true"' : ''}></button>`
+    ).join('\n');
     const body = `  <article class="story">
     <h1 class="story-title">${esc(story.title)}</h1>
     <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
-${partsHtml}
+    <div class="reader-deck">
+      <div class="reader-track">
+${cardsHtml}
+      </div>
+    </div>
+    <div class="reader-controls">
+      <button class="reader-prev" aria-label="Phần trước" type="button" disabled>←</button>
+      <div class="reader-dots">
+${dotsHtml}
+      </div>
+      <button class="reader-next" aria-label="Phần sau" type="button">→</button>
+    </div>
+    <p class="reader-count">1 / ${story.parts.length}</p>
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
-  <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>`;
+  <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
+  <script src="../../assets/reader.js" defer></script>`;
     fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../'));
   }
 

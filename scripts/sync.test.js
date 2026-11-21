@@ -86,9 +86,36 @@ test('does not duplicate the title-card text or image on a post page', () => {
   s.record.parts[0].text = `${s.record.title}\n${s.record.byline}`;
   const { outDir } = setup([s]);
   const html = postHtml(outDir, 'a-story');
-  assert.equal((html.match(/class="part-image"/g) || []).length, 1);
+  assert.equal((html.match(/class="card-image"/g) || []).length, 1);
   assert.doesNotMatch(html, /class="story-cover"/);
-  assert.doesNotMatch(html, /class="part-text">Tiêu đề/);
+  assert.doesNotMatch(html, /class="card-text">Tiêu đề/);
+});
+
+test('renders one reader card per part with image above text', () => {
+  const s = story();
+  s.record.parts.push({ kind: 'main', text: 'Thêm', image: '3.webp' });
+  const { outDir } = setup([s]);
+  const html = postHtml(outDir, 'a-story');
+  assert.equal((html.match(/class="reader-card"/g) || []).length, 2);
+  assert.equal((html.match(/class="card-text"/g) || []).length, 2);
+  const firstCard = html.slice(html.indexOf('class="reader-card"'), html.indexOf('class="reader-card"', html.indexOf('class="reader-card"') + 1));
+  assert.ok(firstCard.indexOf('class="card-image"') < firstCard.indexOf('class="card-text"'));
+});
+
+test('generates controls and progress for every part', () => {
+  const s = story();
+  s.record.parts.push({ kind: 'main', text: 'Thêm', image: '3.webp' });
+  const { outDir } = setup([s]);
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /class="reader-prev" aria-label="Phần trước"/);
+  assert.match(html, /class="reader-next" aria-label="Phần sau"/);
+  assert.match(html, /class="reader-count">1 \/ 2</);
+  assert.equal((html.match(/class="reader-dot"/g) || []).length, 2);
+});
+
+test('loads the reader enhancer', () => {
+  const { outDir } = setup([story()]);
+  assert.match(postHtml(outDir, 'a-story'), /src="\.\.\/\.\.\/assets\/reader\.js" defer/);
 });
 
 test('does not emit a non-http source link', () => {
