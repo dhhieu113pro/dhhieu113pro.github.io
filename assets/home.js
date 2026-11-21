@@ -1,6 +1,28 @@
 (() => {
   'use strict';
 
+  const listenButton = document.querySelector('.listen-toggle');
+  if (listenButton) {
+    const readListen = () => {
+      try { return localStorage.getItem('blog-listen') === '1'; } catch (error) { return false; }
+    };
+    const paint = (on) => {
+      listenButton.setAttribute('aria-pressed', String(on));
+      listenButton.classList.toggle('listen-on', on);
+    };
+    paint(readListen());
+    listenButton.addEventListener('click', () => {
+      const nextOn = !readListen();
+      try {
+        if (nextOn) localStorage.setItem('blog-listen', '1');
+        else localStorage.removeItem('blog-listen');
+      } catch (error) {
+        /* storage unavailable: still switch for this page */
+      }
+      paint(nextOn);
+    });
+  }
+
   const feed = document.querySelector('.cover-feed');
   const count = document.querySelector('.feed-count');
   const next = document.querySelector('.feed-next');

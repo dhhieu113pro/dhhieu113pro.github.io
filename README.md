@@ -46,6 +46,28 @@ a `description` (posts use the story's `lead`), a favicon link, and an
 `og:image` pointing at the absolute logo URL.
 GitHub Pages serves the repo root at <https://dhhieu113pro.github.io/>.
 
+## Listen mode
+
+Each sentence can be spoken by a pre-generated MP3. Build the audio after
+syncing stories (this runs the local VieNeu TTS and needs ffmpeg):
+
+```bash
+node scripts/audio.js
+```
+
+It writes `assets/audio/<slug>/NNN.mp3` plus a `.text` hash. `sync.js` links a
+`data-audio` file only when that hash matches the current text, so a changed
+story never points at stale audio — rerun `audio.js` and `sync.js` together.
+
+The voice follows the narrator's gender (F → `doan_trang`, M → `duc_tri`). To
+override one story, add it to `scripts/listen-overrides.json` keyed by slug:
+
+```json
+{ "a-story-slug": { "gender": "F", "voice": "kim_thanh" } }
+```
+
+Both keys are optional; `voice` wins over `gender`.
+
 ## Develop
 
 ```bash

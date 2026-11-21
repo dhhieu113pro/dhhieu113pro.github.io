@@ -1,9 +1,107 @@
+'use strict';
+
+function createListen({ sentences, cards, getIndex, goTo, toggle, storage, AudioCtor, reducedMotion = () => false }) {
+  const audio = new AudioCtor();
+  const prefetch = new AudioCtor();
+  let playing = false;
+  let current = -1;
+  let token = 0;
+
+  const prefOn = () => {
+    try { return storage.getItem('blog-listen') === '1'; } catch (error) { return false; }
+  };
+  const paint = (on) => {
+    toggle.setAttribute('aria-pressed', String(on));
+    toggle.classList.toggle('listen-on', on);
+  };
+  const clearHighlights = () => sentences.forEach((s) => s.classList.remove('playing'));
+  const cardOf = (el) => cards.indexOf(el.closest('.reader-card'));
+
+  function playFrom(i) {
+    if (!playing) return;
+    if (i >= sentences.length) { stopListen(); return; }
+    current = i;
+    clearHighlights();
+    const el = sentences[i];
+    el.classList.add('playing');
+    const cardIndex = cardOf(el);
+    if (cardIndex >= 0 && cardIndex !== getIndex()) goTo(cardIndex);
+    const card = cardIndex >= 0 ? cards[cardIndex] : null;
+    const body = card && card.querySelector('.card-body');
+    if (body && typeof body.scrollTo === 'function') {
+      // offsetTop is relative to the nearest positioned ancestor, so measure
+      // against the body itself when the real DOM is available.
+      const top = typeof el.getBoundingClientRect === 'function' && typeof body.getBoundingClientRect === 'function'
+        ? el.getBoundingClientRect().top - body.getBoundingClientRect().top + (body.scrollTop || 0)
+        : (el.offsetTop || 0);
+      body.scrollTo({
+        top: Math.max(0, top - (body.clientHeight || 0) / 2),
+        behavior: reducedMotion() ? 'auto' : 'smooth',
+      });
+    }
+    audio.src = el.dataset.audio || '';
+    const next = sentences[i + 1];
+    prefetch.src = next ? next.dataset.audio || '' : '';
+    const attempt = ++token;
+    const result = audio.play();
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => { if (playing && token === attempt) playFrom(i + 1); });
+    }
+  }
+
+  audio.addEventListener('ended', () => { if (playing) playFrom(current + 1); });
+  audio.addEventListener('error', () => { if (playing) playFrom(current + 1); });
+
+  function startListen() {
+    if (playing) return;
+    playing = true;
+    paint(true);
+    let start = sentences.findIndex((s) => cardOf(s) === getIndex());
+    if (start < 0) start = 0;
+    playFrom(start);
+  }
+
+  function stopListen() {
+    playing = false;
+    token++;
+    audio.pause();
+    audio.src = '';
+    prefetch.src = '';
+    clearHighlights();
+    paint(false);
+  }
+
+  function toggleListen() {
+    if (playing) {
+      stopListen();
+      try { storage.removeItem('blog-listen'); } catch (error) { /* storage unavailable */ }
+    } else {
+      try { storage.setItem('blog-listen', '1'); } catch (error) { /* storage unavailable */ }
+      startListen();
+    }
+  }
+
+  function onNavigated(target) {
+    if (!playing) return;
+    let i = sentences.findIndex((s) => cardOf(s) === target);
+    if (i < 0) i = 0;
+    playFrom(i);
+  }
+
+  paint(prefOn());
+  toggle.addEventListener('click', toggleListen);
+
+  return { startListen, stopListen, toggleListen, onNavigated, isPlaying: () => playing };
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 (() => {
   'use strict';
 
   const SWIPE_MIN = 45;
   const controllers = [];
   let activeDeck = null;
+  let listen = null;
 
   const phone = window.matchMedia('(max-width: 719px)');
   const syncFullscreen = () => document.body.classList.toggle('reader-fullscreen', phone.matches);
@@ -16,7 +114,7 @@
       || (controllers.length === 1 ? controllers[0] : null);
     if (!entry) return;
     event.preventDefault();
-    entry.goTo(entry.getIndex() + (event.key === 'ArrowRight' ? 1 : -1));
+    entry.navigate(entry.getIndex() + (event.key === 'ArrowRight' ? 1 : -1));
   });
 
   function setup(deck) {
@@ -58,12 +156,30 @@
       render();
     }
 
-    controllers.push({ deck, goTo, getIndex: () => index });
+    function navigate(target) {
+      goTo(target);
+      if (listen) listen.onNavigated(target);
+    }
+
+    controllers.push({ deck, goTo, navigate, getIndex: () => index });
     deck.addEventListener('focusin', () => { activeDeck = deck; });
+
+    if (!listen) {
+      const toggle = document.querySelector('.listen-toggle');
+      const sentences = [...document.querySelectorAll('.sentence[data-audio]')];
+      if (toggle && sentences.length) {
+        listen = createListen({
+          sentences, cards, getIndex: () => index, goTo, toggle,
+          storage: window.localStorage,
+          AudioCtor: window.Audio,
+          reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        });
+      }
+    }
 
     dots.forEach((dot, i) => dot.addEventListener('click', () => {
       activeDeck = deck;
-      goTo(i);
+      navigate(i);
     }));
 
     let startX = 0;
@@ -86,7 +202,7 @@
       const dx = event.clientX - startX;
       const dy = event.clientY - startY;
       if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) <= Math.abs(dy)) return;
-      goTo(index + (dx < 0 ? 1 : -1));
+      navigate(index + (dx < 0 ? 1 : -1));
     });
     const endSwipe = () => { pointerId = null; deck.classList.remove('is-swiping'); };
     deck.addEventListener('pointercancel', endSwipe);
@@ -120,3 +236,6 @@
     updateHint();
   });
 })();
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { createListen };

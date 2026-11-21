@@ -1,0 +1,113 @@
+# Browser check for listen mode (Task 8 of docs/superpowers/plans/2026-11-21-listen-mode.md).
+#
+# Serve the regenerated worktree over HTTP first — Chromium gives file:// an
+# opaque origin, where localStorage throws, and the whole point of the check is
+# that the preference persists.
+#
+#   cd <worktree> && node -e '...static server...' &      # or any static server
+#   node ~/pwterm/bin/pwterm.js run checks/listen.yaml \
+#     --var base=http://127.0.0.1:8123 --var slug=<post-slug>
+#
+# Assertions throw inside eval: a throw fails the step (pwterm reports FlowError).
+
+timeout: 120000
+
+vars:
+  base: 'http://127.0.0.1:8123'
+  slug: ''
+
+steps:
+  # ---------- Home page: the toggle persists across a reload ----------
+  - setViewport: { width: 360, height: 780 }
+  - goto: { url: '{{base}}/index.html', waitUntil: load }
+  - waitFor: '.listen-toggle'
+  - eval: |
+      (() => {
+        localStorage.removeItem('blog-listen');
+        const btn = document.querySelector('.listen-toggle');
+        if (!btn) throw new Error('no home listen-toggle');
+        if (btn.getBoundingClientRect().width <= 0) throw new Error('home listen-toggle hidden at phone width');
+        btn.click();
+        if (localStorage.getItem('blog-listen') !== '1') throw new Error('click did not persist blog-listen=1');
+        if (btn.getAttribute('aria-pressed') !== 'true') throw new Error('aria-pressed not true after click');
+        return { ok: 'home toggle persists' };
+      })()
+  - reload: {}
+  - waitFor: '.listen-toggle'
+  - eval: |
+      (() => {
+        const btn = document.querySelector('.listen-toggle');
+        if (btn.getAttribute('aria-pressed') !== 'true') throw new Error('preference lost across reload');
+        if (!btn.classList.contains('listen-on')) throw new Error('listen-on missing after reload');
+        return { ok: 'preference survives reload' };
+      })()
+
+  # ---------- Post page, phone: one tap starts playback ----------
+  - goto: { url: '{{base}}/posts/{{slug}}/index.html', waitUntil: load }
+  - waitFor: '.listen-toggle'
+  - waitFor: '.sentence[data-audio]'
+  - eval: |
+      (() => {
+        localStorage.removeItem('blog-listen');
+        const btn = document.querySelector('.listen-toggle');
+        if (btn.getBoundingClientRect().width <= 0) throw new Error('post listen-toggle hidden at phone width');
+        btn.click();
+        return { ok: 'tapped' };
+      })()
+  - wait: 600
+  - eval: |
+      (() => {
+        const btn = document.querySelector('.listen-toggle');
+        if (btn.getAttribute('aria-pressed') !== 'true') throw new Error('aria-pressed not true while playing');
+        const playing = document.querySelector('.sentence.playing');
+        if (!playing) throw new Error('no .sentence.playing after starting');
+        const style = getComputedStyle(playing);
+        if (style.backgroundColor === 'rgba(0, 0, 0, 0)') throw new Error('playing sentence has no background');
+        if (style.borderLeftWidth === '0px') throw new Error('playing sentence has no left border');
+        return { ok: 'playing', text: playing.textContent.trim().slice(0, 40) };
+      })()
+
+  # Swiping to the next card restarts reading from that card's first sentence.
+  - eval: |
+      (() => {
+        const deck = document.querySelector('.reader-deck');
+        if (!deck) throw new Error('no .reader-deck');
+        deck.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        return { ok: 'navigated' };
+      })()
+  - wait: 600
+  - eval: |
+      (() => {
+        const playing = document.querySelector('.sentence.playing');
+        if (!playing) throw new Error('no .sentence.playing after navigating');
+        const card = playing.closest('.reader-card');
+        if (!card) throw new Error('playing sentence is not inside a card');
+        const cards = [...document.querySelectorAll('.reader-card')];
+        const at = cards.indexOf(card);
+        if (at < 0) throw new Error('playing card not found');
+        return { ok: 'highlight followed navigation', card: at };
+      })()
+
+  # Tapping again stops and clears the preference.
+  - eval: |
+      (() => {
+        document.querySelector('.listen-toggle').click();
+        if (document.querySelector('.sentence.playing')) throw new Error('highlight left after stop');
+        if (localStorage.getItem('blog-listen')) throw new Error('preference not cleared after stop');
+        if (document.querySelector('.listen-toggle').getAttribute('aria-pressed') !== 'false') throw new Error('aria-pressed not false after stop');
+        return { ok: 'stopped' };
+      })()
+
+  # ---------- Desktop: the button stays reachable ----------
+  - setViewport: { width: 1024, height: 900 }
+  - reload: {}
+  - waitFor: '.listen-toggle'
+  - eval: |
+      (() => {
+        const btn = document.querySelector('.listen-toggle');
+        const r = btn.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) throw new Error(`listen-toggle hidden on desktop (${r.width}x${r.height})`);
+        return { ok: 'desktop visible', w: r.width, h: r.height };
+      })()
+  - screenshot: artifacts/listen-desktop.png

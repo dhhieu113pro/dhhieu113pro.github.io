@@ -135,7 +135,8 @@ img {
 .card-media img { width: 100%; }
 .card-body { padding: 24px 22px 12px; }
 .card-text { margin: 0 auto; max-width: 62ch; text-align: left; line-height: 1.8; }
-.sentence { display: block; margin: 0 0 0.6em; }
+.sentence { display: block; margin: 0 0 0.6em; border-left: 3px solid transparent; }
+.sentence.playing { background: rgba(127, 127, 127, 0.16); border-left-color: var(--accent); }
 .reader-dots { display: none; }
 
 /* Enhanced by assets/reader.js */
@@ -511,7 +512,8 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-next {
 }
 
 /* Theme toggle */
-.theme-toggle {
+.theme-toggle,
+.listen-toggle {
   flex: 0 0 44px;
   width: 44px;
   height: 44px;
@@ -528,6 +530,10 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-next {
   -webkit-touch-callout: none;
 }
 .theme-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+.listen-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+.listen-toggle.listen-on,
+.listen-toggle[aria-pressed="true"] { background: rgba(127, 127, 127, 0.18); color: var(--accent); }
+.listen-icon { width: 20px; height: 20px; }
 .theme-icon { display: none; width: 20px; height: 20px; }
 :root[data-theme="light"] .theme-icon[data-mode="light"],
 :root[data-theme="dark"] .theme-icon[data-mode="dark"],
@@ -535,7 +541,7 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-next {
   display: block;
 }
 
-/* Desktop post pages have no reader top bar: keep just the theme toggle reachable */
+/* Desktop post pages have no reader top bar: keep the theme and listen toggles reachable */
 @media (min-width: 720px) {
   .reader-topbar {
     display: flex;
@@ -543,7 +549,7 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-next {
     min-height: 0;
     padding: 0;
   }
-  .reader-topbar > :not(.theme-toggle) { display: none; }
+  .reader-topbar > :not(.theme-toggle):not(.listen-toggle) { display: none; }
 }
 
 /* Topic index page */

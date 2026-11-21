@@ -6,7 +6,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { makeFixture } = require('./fixtures/make-db');
-const { syncStories, topicOf } = require('./sync');
+const { syncStories, topicOf, storyParts, sentenceTexts, sentenceHash, sentences } = require('./sync');
+const { detectGender } = require('./gender');
 
 function setup(stories) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-sync-'));
@@ -425,4 +426,150 @@ test('home emits the brand mark only when the logo file exists', () => {
   fs.writeFileSync(path.join(outDir, 'assets', 'logo.png'), 'fake-png');
   syncStories({ dbPath: path.join(dir, 'stories.sqlite'), outDir });
   assert.match(fs.readFileSync(path.join(outDir, 'index.html'), 'utf8'), /class="brand-mark" src="assets\/logo\.png\?v=[0-9a-f]{8}"/);
+});
+
+test('storyParts drops the begin part and keeps the rest', () => {
+  const parts = storyParts(story().record);
+  assert.equal(parts.length, 1);
+  assert.equal(parts[0].kind, 'main');
+});
+
+test('sentenceTexts flattens sentences across parts in render order', () => {
+  const record = {
+    parts: [
+      { kind: 'begin', text: 'Không đọc.' },
+      { kind: 'pre', text: 'Một. Hai.\nBa.' },
+      { kind: 'main', text: '\nBốn.\n\n' },
+    ],
+  };
+  assert.deepEqual(sentenceTexts(record), ['Một.', 'Hai.', 'Ba.', 'Bốn.']);
+});
+
+test('sentenceHash is stable and changes with the text', () => {
+  const a = { parts: [{ kind: 'main', text: 'Một. Hai.' }] };
+  const b = { parts: [{ kind: 'main', text: 'Một. Ba.' }] };
+  assert.equal(sentenceHash(a), sentenceHash(a));
+  assert.notEqual(sentenceHash(a), sentenceHash(b));
+});
+
+function textRecord(text, extra = {}) {
+  return { slug: 'a-story', parts: [{ kind: 'main', text }], ...extra };
+}
+
+test('gender: explicit female self-description picks the female voice', () => {
+  const got = detectGender(textRecord('Tôi là người phụ nữ đã trải qua một lần đò.'), {});
+  assert.equal(got.gender, 'F');
+  assert.equal(got.voice, 'doan_trang');
+  assert.equal(got.source, 'rule');
+});
+
+test('gender: a husband implies a female narrator', () => {
+  assert.equal(detectGender(textRecord('Mỗi ngày về nhà tôi không dám than thở với chồng.'), {}).gender, 'F');
+});
+
+test('gender: a wife implies a male narrator', () => {
+  const got = detectGender(textRecord('Sau đám cưới, vợ tôi trao cho tôi một khoản tiền.'), {});
+  assert.equal(got.gender, 'M');
+  assert.equal(got.voice, 'duc_tri');
+});
+
+test('gender: partner nouns choose M for bạn gái and F for bạn trai', () => {
+  assert.equal(detectGender(textRecord('Tôi có bạn gái.'), {}).gender, 'M');
+  assert.equal(detectGender(textRecord('Tôi có bạn trai.'), {}).gender, 'F');
+});
+
+test('gender: no marker defaults to M', () => {
+  assert.equal(detectGender(textRecord('Tôi làm nhân viên kinh doanh.'), {}).gender, 'M');
+});
+
+test('gender: cô gái is the partner, never a narrator marker', () => {
+  assert.equal(detectGender(textRecord('Tôi từng yêu một cô gái hơn hai năm.'), {}).gender, 'M');
+});
+
+test('gender: equal chồng and vợ counts fall through to the default', () => {
+  const text = 'Tôi nghe chồng tôi nói về vợ tôi. Chồng và vợ đều về.';
+  assert.equal(detectGender(textRecord(text), {}).gender, 'M');
+});
+
+test('gender: override wins over detection', () => {
+  const got = detectGender(textRecord('Tôi là con trai duy nhất.'), { 'a-story': { gender: 'F' } });
+  assert.equal(got.gender, 'F');
+  assert.equal(got.source, 'override');
+});
+
+test('gender: voice override wins while gender is still detected', () => {
+  const got = detectGender(textRecord('Tôi có bạn trai.'), { 'a-story': { voice: 'kim_thanh' } });
+  assert.equal(got.gender, 'F');
+  assert.equal(got.voice, 'kim_thanh');
+});
+
+test('gender: the four real stories resolve F, M, M, F', () => {
+  const cases = [
+    ['Tôi là người phụ nữ đã trải qua một lần đò, không có hạnh phúc vì chồng ham chơi lười làm.', 'F'],
+    ['Tôi là con trai duy nhất, chị gái đã lấy chồng, kinh tế cũng vất vả.', 'M'],
+    ['Tôi 35 tuổi, đã có bạn gái.', 'M'],
+    ['Tôi mới kết hôn chưa đầy sáu tháng mà mỗi ngày về nhà là cảm thấy nặng nề trong lòng, không dám than thở với chồng.', 'F'],
+  ];
+  for (const [text, expected] of cases) {
+    assert.equal(detectGender(textRecord(text), {}).gender, expected, text);
+  }
+});
+
+function setupAudio({ hash, mp3s = true } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-audio-sync-'));
+  const s = story();
+  s.record.parts[1].text = 'Một. Hai.';
+  const dbPath = makeFixture({ dir, stories: [s] });
+  const outDir = path.join(dir, 'site');
+  fs.mkdirSync(outDir, { recursive: true });
+  if (hash !== false) {
+    const audioDir = path.join(outDir, 'assets', 'audio', s.slug);
+    fs.mkdirSync(audioDir, { recursive: true });
+    fs.writeFileSync(path.join(audioDir, '.text'), hash || sentenceHash(s.record));
+    if (mp3s) {
+      const count = s.record.parts.reduce((n, part) => n + sentences(part.text).length, 0);
+      for (let i = 0; i < count; i++) fs.writeFileSync(path.join(audioDir, `${String(i).padStart(3, '0')}.mp3`), 'fake');
+    }
+  }
+  const messages = [];
+  const original = console.error;
+  console.error = (message) => messages.push(message);
+  try {
+    syncStories({ dbPath, outDir });
+  } finally {
+    console.error = original;
+  }
+  return { outDir, messages };
+}
+
+test('sync links audio with a post-relative data-audio and a listen toggle', () => {
+  const { outDir } = setupAudio();
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /class="sentence" data-audio="\.\.\/\.\.\/assets\/audio\/a-story\/000\.mp3">Một\.<\/span>/);
+  assert.match(html, /class="sentence" data-audio="\.\.\/\.\.\/assets\/audio\/a-story\/001\.mp3">Hai\.<\/span>/);
+  assert.equal((html.match(/class="listen-toggle"/g) || []).length, 1);
+});
+
+test('sync refuses stale or missing audio and warns with the slug', () => {
+  for (const hash of [false, 'stale']) {
+    const { outDir, messages } = setupAudio({ hash });
+    const html = postHtml(outDir, 'a-story');
+    assert.doesNotMatch(html, /data-audio=/);
+    assert.doesNotMatch(html, /class="listen-toggle"/);
+    assert.ok(messages.some((m) => /a-story/.test(m) && /audio/.test(m)), messages.join('\n'));
+  }
+});
+
+test('sync refuses a matching hash when an mp3 is missing', () => {
+  const { outDir, messages } = setupAudio({ mp3s: false });
+  const html = postHtml(outDir, 'a-story');
+  assert.doesNotMatch(html, /data-audio=/);
+  assert.doesNotMatch(html, /class="listen-toggle"/);
+  assert.ok(messages.some((m) => /a-story/.test(m) && /audio/.test(m)), messages.join('\n'));
+});
+
+test('the home top bar always has one listen toggle', () => {
+  const { outDir } = setupAudio({ hash: false });
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.equal((html.match(/class="listen-toggle"/g) || []).length, 1);
 });
