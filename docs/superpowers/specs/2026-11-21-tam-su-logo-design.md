@@ -16,8 +16,8 @@ Việc này thêm một trang mục **Tâm sự** (gom truyện theo chủ đề
 - `/tam-su/` do `sync.js` sinh ra, liệt kê **mọi** truyện, gom theo chủ đề.
 - Tới được từ nav mọi trang bài + topbar trang chủ.
 - Một file logo (sinh bằng `pwterm imagine` / KIE) dùng làm: favicon, brand mark ở topbar home, brand mark ở site header, `og:image`.
-- `<meta name="description">` cho trang.
-- 28 test hiện tại vẫn xanh, thêm test mới.
+- `<meta name="description">` cho **mọi** trang: trang bài lấy `lead` của bài đó, trang chủ và trang Tâm sự có câu riêng.
+- 33 test hiện tại vẫn xanh, thêm test mới.
 
 ## Non-goals (cố ý không làm)
 
@@ -35,6 +35,7 @@ Việc này thêm một trang mục **Tâm sự** (gom truyện theo chủ đề
 - URL asset mang `?v=` hash từ `assetVersion()` — file logo phải vào danh sách hash, nếu không đổi logo sẽ bị cache cũ.
 - `shell(title, body, prefix, lockZoom, bare)` dùng cho 3 loại trang: home (`bare`, prefix `''`), bài (`prefix '../../'`), và trang mới này (`prefix '../'`). Link trong chrome phải dùng `prefix`, không hardcode.
 - Trang home **không có header** (bare) → nav tới trang mới phải nằm trong `.feed-topbar`.
+- README hứa "top bar **mỗi trang** đều có nút theme" → trang mới cũng phải có toggle, nhưng **không** được sinh toggle thứ hai ở trang bài.
 - Test hiện có `assert.match(html, /class="feed-brand">Termux\.io\.vn/)` sẽ vỡ nếu markup đổi → phải cập nhật.
 - KIE: key trong `~/.pwterm/settings.json` (`available: true`), model `minimax-h3/text-to-image`, `resolution` mặc định `1K`, **chỉ ra jpeg**. Không có ImageMagick; có `ffmpeg` (có muxer ICO) và `python3`.
 - `pwterm` chạy được ở HEAD — chỉ cần `PLAYWRIGHT_BROWSERS_PATH=0` (shim tự set). Ghi cũ "kie.js bị cắt" là stale, đã sửa.
@@ -116,6 +117,7 @@ Kết quả thật trên 4 bài hiện có (đã chạy thử, **đây là accep
    **Prompt nháp** (builder sửa cho đẹp): *flat minimalist app icon, rounded square, deep near-black charcoal background, centered glowing neon-green terminal prompt — a right-pointing chevron above a short horizontal underscore line, thin warm gold and red arc along the bottom edge, soft outer glow, high contrast, crisp edges, no words, no letters, no numbers, perfectly centered, 1:1 square*.
    → Cố ý mô tả "chevron + gạch dưới" thay vì ký tự `>_`, tránh AI vẽ chữ sai.
 2. **Con người chọn** 1 trong 4 (builder dừng lại chờ chọn).
+   **Ngân sách ảnh (đã chốt):** tối đa **2 batch** = 8 ảnh KIE. Batch 1 bị từ chối hết → sinh batch 2 rồi dừng hỏi lại. Batch 2 vẫn xấu → **dừng sinh ảnh, chuyển sang SVG vẽ tay (cách 2C)** để nhánh không bị kẹt và không đốt thêm credit.
 3. Chuyển đổi (ffmpeg, đã thử tay — một lệnh, một file):
    ```
    ffmpeg -i <chon>.jpg -vf scale=512:512 -y assets/logo.png
@@ -133,7 +135,18 @@ Kết quả thật trên 4 bài hiện có (đã chạy thử, **đây là accep
 <meta property="og:image" content="https://termux.io.vn/assets/logo.png">
 ```
 
-- Tham số `description` **tùy chọn** cho `shell()`; không truyền → dùng `SITE_DESC` mặc định.
+- Tham số `description` **tùy chọn** cho `shell()`. Nguồn theo loại trang:
+  - **Trang bài** → `record.lead` của bài đó (đã có sẵn trong DB, nhưng `sync.js` **chưa đọc** — thêm một dòng). Mỗi trang một mô tả riêng, đúng nội dung.
+  - **Trang chủ** → `HOME_DESC`.
+  - **Trang Tâm sự** → câu trong bảng Copy.
+  - Không truyền gì cả → `SITE_DESC` (lưới an toàn, chỉ dùng khi không có lead).
+- Copy (đã chốt, public — người dùng duyệt rồi):
+
+  | Hằng | Nội dung |
+  |---|---|
+  | `SITE_DESC` | `Termux.io.vn — những câu chuyện đời thường, đọc dạng thẻ trên điện thoại.` |
+  | `HOME_DESC` | `Đọc truyện tâm sự đời thường của người Việt — tình yêu, hôn nhân, gia đình — dưới dạng thẻ dễ đọc trên điện thoại.` |
+
 - Thêm `'logo.png'` vào mảng file của `assetVersion()` để đổi logo là đổi hết `?v=`.
 - `favicon.ico` **không** mang `?v=` (trình duyệt cache favicon rất dai; chấp nhận — shortcut đã biết).
 - `og:image` là URL tuyệt đối, `SITE_URL = 'https://termux.io.vn'` hardcode trong `sync.js` (đã có CNAME).

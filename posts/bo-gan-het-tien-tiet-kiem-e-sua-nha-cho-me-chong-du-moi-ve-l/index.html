@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <script>
-try { document.documentElement.dataset.theme = localStorage.getItem('blog-theme') || 'auto'; }
+try { var t = localStorage.getItem('blog-theme'); document.documentElement.dataset.theme = (t === 'light' || t === 'dark' || t === 'auto') ? t : 'auto'; }
 catch (error) { document.documentElement.dataset.theme = 'auto'; }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Bỏ gần hết tiền tiết kiệm để sửa nhà cho mẹ chồng dù mới về làm dâu nửa năm</title>
-<link rel="stylesheet" href="../../assets/style.css?v=55971208">
+<link rel="stylesheet" href="../../assets/style.css?v=914e17d7">
 </head>
 <body>
 <header class="site-header">
@@ -139,9 +139,9 @@ catch (error) { document.documentElement.dataset.theme = 'auto'; }
     <p class="story-source">Nguồn: <a href="https://vnexpress.net/bo-gan-het-tien-tiet-kiem-de-sua-nha-cho-me-chong-du-moi-ve-lam-dau-nua-nam-5147130.html">Bài gốc</a></p>
   </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
-  <script src="../../assets/reader.js?v=55971208" defer></script>
+  <script src="../../assets/reader.js?v=914e17d7" defer></script>
 </main>
 <footer class="site-footer">Termux.io.vn · Những câu chuyện đời thường</footer>
-<script src="../../assets/theme.js?v=55971208" defer></script>
+<script src="../../assets/theme.js?v=914e17d7" defer></script>
 </body>
 </html>

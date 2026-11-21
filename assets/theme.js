@@ -16,7 +16,6 @@
     document.documentElement.dataset.theme = mode;
     document.querySelectorAll('.theme-toggle').forEach((button) => {
       button.setAttribute('aria-label', `Chế độ: ${LABELS[mode]}`);
-      button.dataset.current = mode;
     });
   }
 

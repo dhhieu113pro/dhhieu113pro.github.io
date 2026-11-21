@@ -150,7 +150,8 @@ test('pages apply the stored theme before CSS', () => {
   const post = postHtml(outDir, 'a-story');
   const home = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
   for (const html of [post, home]) {
-    assert.match(html, /localStorage\.getItem\('blog-theme'\) \|\| 'auto'/);
+    assert.match(html, /localStorage\.getItem\('blog-theme'\)/);
+    assert.match(html, /t === 'light' \|\| t === 'dark' \|\| t === 'auto'\) \? t : 'auto'/);
     assert.match(html, /dataset\.theme/);
   }
 });

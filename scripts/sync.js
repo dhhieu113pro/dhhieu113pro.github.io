@@ -68,7 +68,7 @@ function shell(title, body, prefix, lockZoom = false, bare = false) {
 <head>
 <meta charset="utf-8">
 <script>
-try { document.documentElement.dataset.theme = localStorage.getItem('blog-theme') || 'auto'; }
+try { var t = localStorage.getItem('blog-theme'); document.documentElement.dataset.theme = (t === 'light' || t === 'dark' || t === 'auto') ? t : 'auto'; }
 catch (error) { document.documentElement.dataset.theme = 'auto'; }
 </script>
 <meta name="viewport" content="${viewport}">

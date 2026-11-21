@@ -18,8 +18,11 @@ narrator's gender, detected when the audio is generated.
 - The reader plays the queue in order, highlights the current sentence
   (border + gray background), switches card and scrolls to it, and stops at
   the last sentence.
-- The toggle is remembered in `localStorage` and works on home and detail.
-- Tests cover the markup and the gender detector.
+- The toggle is remembered in `localStorage` and works on home and detail,
+  on phone and desktop.
+- Opening a story never starts sound on its own: one tap on the headphones
+  begins reading.
+- Tests cover the markup, the gender detector and the stale-audio guard.
 
 ## Non-goals
 
@@ -104,6 +107,12 @@ narrator's gender, detected when the audio is generated.
   "story reading" style packs that exist in `models/voices/`).
 - `record.voice` (a pack directory name) overrides everything;
   `record.gender` (`male`/`female`) overrides the detection.
+- **Correction lives in the blog repo, not the database.** pwterm re-writes a
+  story's `record` on every re-capture, so anything stored in
+  `stories.sqlite` would be silently wiped. `audio.js` reads
+  `scripts/listen-overrides.json` — `{ "<slug>": { "gender": "…", "voice": "…" } }`
+  — and merges it over the record. Fixing a wrong guess is a one-line edit
+  in a file that survives re-crawls and is committed with the site.
 - Detection, first match wins:
   1. explicit self-description — `tôi|mình … là (người )?(phụ nữ|đàn ông|con gái|con trai)`;
   2. narrator's spouse — `chồng tôi` / `vợ tôi` / `có vợ|chồng` /
@@ -121,15 +130,38 @@ narrator's gender, detected when the audio is generated.
   exists, so an un-generated story simply has nothing to play.
 - A `listenToggle()` helper (mirroring `themeToggle()`) emits a 44 px
   headphones button: on the reader top bar only when the story has at least
-  one sentence with audio, on the home top bar always.
+  one sentence with audio, on the home top bar always. The existing ≥720 px
+  rule that hides every top-bar button except the theme toggle is edited to
+  keep the headphones button too, so listen mode works on desktop.
 - `reader.js` and `home.js` already join the `assetVersion()` hash set; no
   new script tag is added.
+
+**Stale-audio guard (`scripts/sync.js`)**
+
+- File existence alone is not enough: a re-crawled story whose text changed
+  would otherwise link old, misaligned MP3s and highlight the wrong sentence
+  with no error anywhere.
+- `sync.js` therefore computes the same sha1 of the story's sentence texts
+  and links `data-audio` only when it matches the story's `.text` hash file.
+  A mismatch means "audio is out of date" → no `data-audio`, no headphones
+  button, and `sync.js` prints a line naming the story so it is obvious
+  `node scripts/audio.js` needs re-running before the next publish.
+- The sentence list and its hash live in one exported helper used by both
+  scripts, so the two can never drift apart.
+- Publish flow becomes `node scripts/audio.js && node scripts/sync.js`, but
+  even running sync alone (the current habit) cannot produce a wrong
+  highlight — it just serves the story without audio.
 
 **Playback (`assets/reader.js`)**
 
 - Queue = every `.sentence[data-audio]` in DOM order.
-- Toggle on → play from the first sentence of the card currently shown.
-  Toggle off → stop, clear the highlight, keep the preference.
+- **Startup requires one tap.** Opening a story with the preference on does
+  not attempt playback: iOS Safari blocks sound that starts without a user
+  gesture, so an auto-start would only ever show a silent, unhighlighted
+  page there. Tap the headphones → play from the first sentence of the card
+  currently shown; tap again → stop, clear the highlight, keep the
+  preference. Every `play()` call handles rejection by stopping cleanly
+  instead of leaving a stuck highlight.
 - One reusable `Audio` element (src swapped between sentences) so the
   browser's user-gesture allowance carries through; a hidden second element
   prefetches the next file to avoid a gap.
@@ -159,8 +191,10 @@ narrator's gender, detected when the audio is generated.
 ## What's left to the builder
 
 - Exact headphone SVG and final `.playing` colors/offsets.
+- Creating `scripts/listen-overrides.json` (starts empty or seeded with the
+  four known stories) and documenting its shape in a comment or README line.
 - Tuning the gender rule list if a future story is guessed wrong (the
-  override field is the escape hatch).
+  overrides file is the escape hatch).
 - Prefetch and scroll-centering details, and whether the prefetch element is
   worth keeping once real playback shows the gap.
 - Bitrate/size tuning if the repo growth is objectionable.
