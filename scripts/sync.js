@@ -154,8 +154,9 @@ ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.sour
     fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true));
   }
 
+  const heading = '  <h1 class="sr-only">Truyện</h1>\n';
   const list = stories.length
-    ? `  <div class="post-grid">
+    ? `${heading}  <div class="post-grid">
 ${stories.map((story) => `    <a class="post-tile" href="posts/${story.slug}/">
 ${story.cover ? `      <img class="tile-image" src="${esc(story.cover.replace('../../', ''))}" alt="">\n` : ''}      <div class="tile-caption">
         <h2 class="tile-title">${esc(story.title)}</h2>
@@ -163,7 +164,7 @@ ${story.cover ? `      <img class="tile-image" src="${esc(story.cover.replace('.
       </div>
     </a>`).join('\n')}
   </div>`
-    : `  <p class="empty-state">${EMPTY_STATE}</p>`;
+    : `${heading}  <p class="empty-state">${EMPTY_STATE}</p>`;
   fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true));
 
   console.log(`Synced ${stories.length} story(ies) into ${outDir}`);

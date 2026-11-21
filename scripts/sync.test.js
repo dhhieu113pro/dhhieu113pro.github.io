@@ -185,6 +185,12 @@ test('home page drops header and footer', () => {
   assert.match(html, /<body class="home-picker">/);
 });
 
+test('home page keeps a screen-reader-only heading', () => {
+  const { outDir } = setup([story()]);
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.match(html, /<h1 class="sr-only">Truyện<\/h1>/);
+});
+
 test('home page renders one tile per story', () => {
   const newer = story({ slug: 'newer', record: { title: 'Mới hơn', byline: '', source: '', createdAt: '2026-11-21T00:00:00.000Z', parts: [{ kind: 'main', text: 'a', image: '1.webp' }] } });
   const older = story({ slug: 'older', record: { title: 'Cũ hơn', byline: '', source: '', createdAt: '2026-11-20T00:00:00.000Z', parts: [{ kind: 'main', text: 'b', image: '1.webp' }] } });

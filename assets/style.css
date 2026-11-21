@@ -319,6 +319,18 @@ body.reader-fullscreen .reader-deck.is-swiping .card-text {
 
 /* Home post picker */
 body.home-picker main { max-width: none; padding: 0; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+body.home-picker .empty-state { padding: 24px 20px; }
 .post-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -347,7 +359,9 @@ body.home-picker main { max-width: none; padding: 0; }
   right: 0;
   bottom: 0;
   padding: 28px 12px 12px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0));
+  background:
+    linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6)),
+    rgba(0, 0, 0, 0.45);
 }
 .tile-title {
   margin: 0;
