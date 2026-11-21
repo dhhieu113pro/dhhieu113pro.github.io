@@ -153,6 +153,7 @@ img {
   border-radius: 10px;
   background: var(--line);
 }
+.reader-deck.reader-ready .card-media:empty { display: none; }
 .reader-deck.reader-ready .card-media img {
   max-height: 100%;
   width: auto;
@@ -191,18 +192,30 @@ img {
   cursor: pointer;
 }
 .reader-controls button:disabled { opacity: 0.35; cursor: default; }
-.reader-dots { display: flex; gap: 8px; align-items: center; }
+.reader-controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.reader-dots { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; }
 .reader-controls .reader-dot {
-  min-width: 0;
-  min-height: 0;
-  width: 10px;
-  height: 10px;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: 0;
+  background: transparent;
+}
+.reader-controls .reader-dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--line);
 }
-.reader-controls .reader-dot[aria-current="true"] { background: var(--accent); }
+.reader-controls .reader-dot[aria-current="true"]::after { background: var(--accent); }
 
 @media (min-width: 720px) {
   .reader-deck.reader-ready {

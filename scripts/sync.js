@@ -137,7 +137,7 @@ ${dotsHtml}
       </div>
       <button class="reader-next" aria-label="Phần sau" type="button">→</button>
     </div>
-    <p class="reader-count">1 / ${story.parts.length}</p>
+    <p class="reader-count" aria-live="polite">1 / ${story.parts.length}</p>
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
   <script src="../../assets/reader.js" defer></script>`;

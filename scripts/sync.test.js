@@ -109,8 +109,13 @@ test('generates controls and progress for every part', () => {
   const html = postHtml(outDir, 'a-story');
   assert.match(html, /class="reader-prev" aria-label="Phần trước"/);
   assert.match(html, /class="reader-next" aria-label="Phần sau"/);
-  assert.match(html, /class="reader-count">1 \/ 2</);
+  assert.match(html, /class="reader-count" aria-live="polite">1 \/ 2</);
   assert.equal((html.match(/class="reader-dot"/g) || []).length, 2);
+});
+
+test('marks the counter as a live region for screen readers', () => {
+  const { outDir } = setup([story()]);
+  assert.match(postHtml(outDir, 'a-story'), /class="reader-count" aria-live="polite"/);
 });
 
 test('loads the reader enhancer', () => {
