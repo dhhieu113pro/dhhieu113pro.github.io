@@ -17,9 +17,10 @@ git add -A && git commit -m "posts: sync stories" && git push
 Post pages use a swipeable card reader: each story part is a card with the
 illustration on top and text below. Swipe, the arrow buttons, the dots, and
 the left/right arrow keys all move between parts; without JavaScript the
-cards simply stack vertically. On phones the post fills the screen: a top bar
-has the back arrow, title and counter, and pinch/double-tap zoom is disabled
-on post pages.
+cards simply stack vertically. Text has a comfortable 62-character measure,
+and a home icon sits below the navigation buttons. On phones the post fills
+the screen: a top bar has the back arrow, title and counter, and
+pinch/double-tap zoom is disabled on post pages.
 
 The home page is a full-screen cover feed (no site header or footer) — swipe
 up/down through covers, tap "Đọc ngay" to open the reader, or use the arrow
