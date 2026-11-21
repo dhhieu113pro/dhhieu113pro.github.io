@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --bg: #fbfaf7;
   --fg: #24211d;
   --muted: #6f685e;
@@ -8,8 +8,20 @@
   --card: #ffffff;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #171613;
+  --fg: #ece7de;
+  --muted: #a49c90;
+  --line: #33302a;
+  --accent: #d8a27c;
+  --card: #201e1a;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root[data-theme="auto"],
+  :root:not([data-theme]) {
+    color-scheme: dark;
     --bg: #171613;
     --fg: #ece7de;
     --muted: #a49c90;
@@ -495,4 +507,40 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-next {
   body { font-size: 16px; }
   .site-header { padding-top: 20px; }
   .story > .story-title { font-size: 1.6rem; }
+}
+
+/* Theme toggle */
+.theme-toggle {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+.theme-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+.theme-icon { display: none; width: 20px; height: 20px; }
+:root[data-theme="light"] .theme-icon[data-mode="light"],
+:root[data-theme="dark"] .theme-icon[data-mode="dark"],
+:root:not([data-theme="light"]):not([data-theme="dark"]) .theme-icon[data-mode="auto"] {
+  display: block;
+}
+
+/* Desktop post pages have no reader top bar: keep just the theme toggle reachable */
+@media (min-width: 720px) {
+  .reader-topbar {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 0;
+    padding: 0;
+  }
+  .reader-topbar > :not(.theme-toggle) { display: none; }
 }

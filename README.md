@@ -17,9 +17,9 @@ git add -A && git commit -m "posts: sync stories" && git push
 Post pages use a swipeable card reader: each story part is a card with the
 illustration on top and text below. Swipe, the arrow buttons, the dots, and
 the left/right arrow keys all move between parts; without JavaScript the
-cards simply stack vertically. Cover images show a shimmer skeleton while
-they load, and a small ↓ badge marks parts whose text scrolls. Text has a comfortable 62-character measure
-with each sentence on its own line. Dots float over the bottom of the card;
+cards simply stack vertically. Cover and card images show a shimmer skeleton
+while they load, and a small ↓ badge marks parts whose text scrolls. Text has
+a comfortable 62-character measure with each sentence on its own line. Dots float over the bottom of the card;
 a "Tiếp theo" bar opens the next story. On phones the post fills the screen:
 a top bar has the back arrow, title and counter, and pinch/double-tap zoom is
 disabled on post pages.
@@ -38,3 +38,10 @@ GitHub Pages serves the repo root at <https://dhhieu113pro.github.io/>.
 node --test scripts/sync.test.js
 node scripts/sync.js --db /path/to/stories.sqlite --out /path/to/output
 ```
+
+## Theme
+
+The top bar on every page has a theme button that cycles **Sáng → Tối → Tự
+động**. Auto follows the device colour scheme (an OS sunset schedule drives it).
+The choice is stored in `localStorage` under `blog-theme` and applied by an
+inline head script before the stylesheet loads, so there is no flash.
