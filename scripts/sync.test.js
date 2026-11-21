@@ -88,7 +88,7 @@ test('does not duplicate the title-card text or image on a post page', () => {
   const html = postHtml(outDir, 'a-story');
   assert.equal((html.match(/class="card-image"/g) || []).length, 1);
   assert.doesNotMatch(html, /class="story-cover"/);
-  assert.doesNotMatch(html, /class="card-text">Tiêu đề/);
+  assert.doesNotMatch(html, /class="sentence">Tiêu đề/);
 });
 
 test('renders one reader card per part with image above text', () => {
@@ -102,20 +102,41 @@ test('renders one reader card per part with image above text', () => {
   assert.ok(firstCard.indexOf('class="card-image"') < firstCard.indexOf('class="card-text"'));
 });
 
-test('generates controls and progress for every part', () => {
-  const s = story();
-  s.record.parts.push({ kind: 'main', text: 'Thêm', image: '3.webp' });
-  const { outDir } = setup([s]);
+test('post drops button controls and bottom counter', () => {
+  const { outDir } = setup([story()]);
   const html = postHtml(outDir, 'a-story');
-  assert.match(html, /class="reader-prev" aria-label="Phần trước"/);
-  assert.match(html, /class="reader-next" aria-label="Phần sau"/);
-  assert.match(html, /class="reader-count" aria-live="polite">1 \/ 2</);
-  assert.equal((html.match(/class="reader-dot"/g) || []).length, 2);
+  assert.doesNotMatch(html, /class="reader-nav"/);
+  assert.doesNotMatch(html, /class="reader-prev"/);
+  assert.doesNotMatch(html, /class="reader-next"/);
+  assert.doesNotMatch(html, /class="reader-home"/);
+  assert.doesNotMatch(html, /class="reader-count"/);
+  assert.equal((html.match(/class="reader-dot"/g) || []).length, 1);
 });
 
-test('marks the counter as a live region for screen readers', () => {
+test('dots live inside the deck', () => {
   const { outDir } = setup([story()]);
-  assert.match(postHtml(outDir, 'a-story'), /class="reader-count" aria-live="polite"/);
+  const html = postHtml(outDir, 'a-story');
+  assert.ok(html.indexOf('class="reader-track"') < html.indexOf('class="reader-dot"'));
+  assert.ok(html.indexOf('class="reader-dot"') < html.indexOf('class="reader-next-post"'));
+});
+
+test('post links to the next story and wraps', () => {
+  const newer = story({ slug: 'newer', record: { title: 'Mới hơn', byline: '', source: '', createdAt: '2026-11-21T00:00:00.000Z', parts: [{ kind: 'main', text: 'a', image: '1.webp' }] } });
+  const older = story({ slug: 'older', record: { title: 'Cũ hơn', byline: '', source: '', createdAt: '2026-11-20T00:00:00.000Z', parts: [{ kind: 'main', text: 'b', image: '1.webp' }] } });
+  const { outDir } = setup([older, newer]);
+  assert.match(postHtml(outDir, 'newer'), /class="reader-next-post" href="\.\.\/older\/"/);
+  assert.match(postHtml(outDir, 'newer'), /class="next-post-title">Cũ hơn</);
+  assert.match(postHtml(outDir, 'older'), /class="reader-next-post" href="\.\.\/newer\/"/);
+  assert.match(postHtml(outDir, 'older'), /class="next-post-title">Mới hơn</);
+});
+
+test('each sentence renders on its own line', () => {
+  const s = story();
+  s.record.parts[1].text = 'Một. Hai. Ba.';
+  const { outDir } = setup([s]);
+  const html = postHtml(outDir, 'a-story');
+  const sentences = [...html.matchAll(/class="sentence">(.*?)<\/span>/g)].map((m) => m[1]);
+  assert.deepEqual(sentences, ['Một.', 'Hai.', 'Ba.']);
 });
 
 test('locks zoom on post pages', () => {
@@ -135,19 +156,6 @@ test('generates a compact top bar', () => {
   assert.match(html, /class="reader-back" href="\.\.\/\.\.\/" aria-label="Trở về"/);
   assert.match(html, /class="reader-top-title">Tiêu đề</);
   assert.match(html, /class="reader-top-count">1 \/ 1</);
-});
-
-test('controls wrap navigation in a reader-nav row', () => {
-  const { outDir } = setup([story()]);
-  const html = postHtml(outDir, 'a-story');
-  assert.match(html, /<div class="reader-controls">\n      <div class="reader-nav">\n        <button class="reader-prev"/);
-});
-
-test('post pages have a home icon link below navigation', () => {
-  const { outDir } = setup([story()]);
-  const html = postHtml(outDir, 'a-story');
-  assert.match(html, /class="reader-home" href="\.\.\/\.\.\/" aria-label="Về trang chủ"/);
-  assert.match(html, /<svg[^>]*aria-hidden="true"/);
 });
 
 test('loads the reader enhancer', () => {

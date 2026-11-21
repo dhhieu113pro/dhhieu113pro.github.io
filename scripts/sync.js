@@ -30,6 +30,13 @@ function esc(value) {
     .replace(/'/g, '&#39;');
 }
 
+function sentences(text) {
+  return String(text || '')
+    .split(/(?<=\.)\s+|\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 function fmtDate(iso) {
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
@@ -128,13 +135,22 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     });
   }
 
-  for (const story of stories) {
+  for (let storyIndex = 0; storyIndex < stories.length; storyIndex++) {
+    const story = stories[storyIndex];
+    const nextStory = stories[(storyIndex + 1) % stories.length];
     const dir = path.join(postsDir, story.slug);
     fs.mkdirSync(dir, { recursive: true });
-    const cardsHtml = story.parts.map((part) => `      <section class="reader-card">
+    const cardsHtml = story.parts.map((part) => {
+      const lines = sentences(part.text)
+        .map((line) => `          <span class="sentence">${esc(line)}</span>`)
+        .join('\n');
+      return `      <section class="reader-card">
         <div class="card-media">${part.image ? `<img class="card-image" src="${esc(part.image)}" alt="">` : ''}</div>
-        <div class="card-body"><p class="card-text">${esc(part.text)}</p></div>
-      </section>`).join('\n');
+        <div class="card-body"><div class="card-text">
+${lines}
+        </div></div>
+      </section>`;
+    }).join('\n');
     const dotsHtml = story.parts.map((part, index) =>
       `        <button class="reader-dot" type="button" aria-label="Phần ${index + 1}"${index === 0 ? ' aria-current="true"' : ''}></button>`
     ).join('\n');
@@ -150,20 +166,15 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
       <div class="reader-track">
 ${cardsHtml}
       </div>
-    </div>
-    <div class="reader-controls">
-      <div class="reader-nav">
-        <button class="reader-prev" aria-label="Phần trước" type="button" disabled>←</button>
-        <div class="reader-dots">
+      <div class="reader-dots">
 ${dotsHtml}
-        </div>
-        <button class="reader-next" aria-label="Phần sau" type="button">→</button>
       </div>
-      <a class="reader-home" href="../../" aria-label="Về trang chủ">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>
-      </a>
     </div>
-    <p class="reader-count" aria-live="polite">1 / ${story.parts.length}</p>
+${nextStory ? `    <a class="reader-next-post" href="../${nextStory.slug}/">
+      <span class="next-post-label">Tiếp theo</span>
+      <span class="next-post-title">${esc(nextStory.title)}</span>
+      <span class="next-post-arrow" aria-hidden="true">→</span>
+    </a>` : ''}
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
   <script src="../../assets/reader.js?v=${assetVersion()}" defer></script>`;
