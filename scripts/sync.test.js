@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { makeFixture } = require('./fixtures/make-db');
-const { syncStories, topicOf } = require('./sync');
+const { syncStories, topicOf, storyParts, sentenceTexts, sentenceHash } = require('./sync');
 
 function setup(stories) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-sync-'));
@@ -414,4 +414,28 @@ test('the topic page has exactly one theme toggle', () => {
   const { outDir } = setup([story()]);
   const html = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
   assert.equal((html.match(/class="theme-toggle"/g) || []).length, 1);
+});
+
+test('storyParts drops the begin part and keeps the rest', () => {
+  const parts = storyParts(story().record);
+  assert.equal(parts.length, 1);
+  assert.equal(parts[0].kind, 'main');
+});
+
+test('sentenceTexts flattens sentences across parts in render order', () => {
+  const record = {
+    parts: [
+      { kind: 'begin', text: 'Không đọc.' },
+      { kind: 'pre', text: 'Một. Hai.\nBa.' },
+      { kind: 'main', text: '\nBốn.\n\n' },
+    ],
+  };
+  assert.deepEqual(sentenceTexts(record), ['Một.', 'Hai.', 'Ba.', 'Bốn.']);
+});
+
+test('sentenceHash is stable and changes with the text', () => {
+  const a = { parts: [{ kind: 'main', text: 'Một. Hai.' }] };
+  const b = { parts: [{ kind: 'main', text: 'Một. Ba.' }] };
+  assert.equal(sentenceHash(a), sentenceHash(a));
+  assert.notEqual(sentenceHash(a), sentenceHash(b));
 });

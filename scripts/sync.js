@@ -67,6 +67,19 @@ function sentences(text) {
     .filter(Boolean);
 }
 
+function storyParts(record) {
+  return (Array.isArray(record?.parts) ? record.parts : [])
+    .filter((part) => part && part.kind !== 'begin');
+}
+
+function sentenceTexts(record) {
+  return storyParts(record).flatMap((part) => sentences(part.text));
+}
+
+function sentenceHash(record) {
+  return crypto.createHash('sha1').update(sentenceTexts(record).join('\u0000')).digest('hex');
+}
+
 function fmtDate(iso) {
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
@@ -150,8 +163,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     const destDir = path.join(imgRoot, slug);
     fs.mkdirSync(destDir, { recursive: true });
 
-    const parts = (Array.isArray(record.parts) ? record.parts : [])
-      .filter((part) => part && part.kind !== 'begin')
+    const parts = storyParts(record)
       .map((part) => {
       const name = String(part.image || '');
       let image = '';
@@ -292,4 +304,4 @@ if (require.main === module) {
   syncStories({ dbPath: option('--db', DEFAULT_DB), outDir: option('--out', DEFAULT_OUT) });
 }
 
-module.exports = { syncStories, topicOf };
+module.exports = { syncStories, topicOf, sentences, storyParts, sentenceTexts, sentenceHash };
