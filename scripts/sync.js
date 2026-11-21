@@ -128,7 +128,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     const body = `  <article class="story">
     <div class="reader-topbar">
       <a class="reader-back" href="../../" aria-label="Trở về">←</a>
-      <span class="reader-top-title">${esc(story.title)}</span>
+      <h1 class="reader-top-title">${esc(story.title)}</h1>
       <span class="reader-top-count">1 / ${story.parts.length}</span>
     </div>
     <h1 class="story-title">${esc(story.title)}</h1>

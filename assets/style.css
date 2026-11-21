@@ -232,6 +232,7 @@ img {
 
 /* Full-page reader on phones */
 .reader-topbar { display: none; }
+.reader-top-title { margin: 0; font-size: 1rem; }
 
 body.reader-fullscreen {
   overflow: hidden;
@@ -242,9 +243,10 @@ body.reader-fullscreen .site-header,
 body.reader-fullscreen .site-footer,
 body.reader-fullscreen .story > .story-title,
 body.reader-fullscreen .story > .story-meta,
-body.reader-fullscreen .story-source,
+body.reader-fullscreen .story > .story-source,
 body.reader-fullscreen .back-link { display: none; }
 body.reader-fullscreen .story {
+  height: 100vh;
   height: 100dvh;
   min-height: 0;
   display: flex;
@@ -290,8 +292,8 @@ body.reader-fullscreen .reader-deck.reader-ready {
   margin: 0;
 }
 body.reader-fullscreen .reader-deck.reader-ready ~ .reader-count { display: none; }
+body.reader-fullscreen .reader-deck.reader-ready ~ .reader-controls { margin: 0; }
 body.reader-fullscreen .reader-controls {
-  margin: 0;
   padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   touch-action: manipulation;

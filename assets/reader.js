@@ -77,6 +77,7 @@
     let pointerId = null;
     deck.addEventListener('pointerdown', (event) => {
       if (!event.isPrimary || event.button !== 0) return;
+      if (event.target.closest('a, button')) return;
       activeDeck = deck;
       pointerId = event.pointerId;
       startX = event.clientX;
