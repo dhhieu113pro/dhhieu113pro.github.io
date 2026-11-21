@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { makeFixture } = require('./fixtures/make-db');
-const { syncStories } = require('./sync');
+const { syncStories, topicOf } = require('./sync');
 
 function setup(stories) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-sync-'));
@@ -323,4 +323,15 @@ test('lists newer stories before older ones', () => {
   const { outDir } = setup([older, newer]);
   const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
   assert.ok(html.indexOf('Mới hơn') < html.indexOf('Cũ hơn'));
+});
+
+test('classifies a story into a topic by title/lead keywords', () => {
+  assert.equal(topicOf('Nghèo nên tôi chẳng dám yêu ai', 'Tôi rất muốn có một mái ấm riêng'), 'Tình yêu');
+  assert.equal(topicOf('Bỏ tiền sửa nhà cho mẹ chồng', 'Tôi mới kết hôn'), 'Hôn nhân & gia đình');
+  assert.equal(topicOf('Anh trao chìa khóa căn nhà cho tôi', 'nghe anh nói về hoàn cảnh'), 'Đời sống');
+  assert.equal(topicOf('Một chủ đề lạ', 'Không có từ khóa nào khớp'), 'Chuyện khác');
+});
+
+test('first matching topic wins (tình yêu beats hôn nhân)', () => {
+  assert.equal(topicOf('Yêu người sắp cưới', 'rung động với cô gái khác'), 'Tình yêu');
 });

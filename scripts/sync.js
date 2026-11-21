@@ -11,6 +11,23 @@ const DEFAULT_DB = path.join(os.homedir(), '.pwterm', 'stories', 'stories.sqlite
 const DEFAULT_OUT = path.resolve(__dirname, '..');
 const EMPTY_STATE = 'Chưa có câu chuyện nào.';
 
+// Keyword topic classification for the Tâm sự index page. Order matters:
+// the first topic whose word appears in title+lead wins.
+const TOPICS = [
+  { name: 'Tình yêu',          words: ['yêu', 'rung động', 'người yêu', 'hẹn hò', 'crush', 'tình yêu'] },
+  { name: 'Hôn nhân & gia đình', words: ['cưới', 'kết hôn', 'chồng', 'vợ', 'mẹ chồng', 'con dâu', 'gia đình', 'đám cưới', 'lấy nhau'] },
+  { name: 'Đời sống',          words: ['nghèo', 'tiền', 'công việc', 'cuộc sống', 'hoàn cảnh', 'đời'] },
+];
+const OTHER_TOPIC = 'Chuyện khác';
+
+function topicOf(title, lead) {
+  const haystack = `${String(title || '')} ${String(lead || '')}`.toLowerCase();
+  for (const topic of TOPICS) {
+    if (topic.words.some((word) => haystack.includes(word))) return topic.name;
+  }
+  return OTHER_TOPIC;
+}
+
 function themeToggle() {
   return `<button class="theme-toggle" type="button" aria-label="Chế độ: Tự động">
   <svg class="theme-icon" data-mode="light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
@@ -232,4 +249,4 @@ if (require.main === module) {
   syncStories({ dbPath: option('--db', DEFAULT_DB), outDir: option('--out', DEFAULT_OUT) });
 }
 
-module.exports = { syncStories };
+module.exports = { syncStories, topicOf };
