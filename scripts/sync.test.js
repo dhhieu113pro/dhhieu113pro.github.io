@@ -118,6 +118,25 @@ test('marks the counter as a live region for screen readers', () => {
   assert.match(postHtml(outDir, 'a-story'), /class="reader-count" aria-live="polite"/);
 });
 
+test('locks zoom on post pages', () => {
+  const { outDir } = setup([story()]);
+  assert.match(postHtml(outDir, 'a-story'), /name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/);
+});
+
+test('keeps the home page zoomable', () => {
+  const { outDir } = setup([story()]);
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.doesNotMatch(html, /user-scalable=no/);
+});
+
+test('generates a compact top bar', () => {
+  const { outDir } = setup([story()]);
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /class="reader-back" href="\.\.\/\.\.\/" aria-label="Trở về"/);
+  assert.match(html, /class="reader-top-title">Tiêu đề</);
+  assert.match(html, /class="reader-top-count">1 \/ 1</);
+});
+
 test('loads the reader enhancer', () => {
   const { outDir } = setup([story()]);
   assert.match(postHtml(outDir, 'a-story'), /src="\.\.\/\.\.\/assets\/reader\.js" defer/);

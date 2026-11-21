@@ -24,13 +24,16 @@ function fmtDate(iso) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
 }
 
-function shell(title, body, prefix) {
+function shell(title, body, prefix, lockZoom = false) {
   const root = prefix || './';
+  const viewport = lockZoom
+    ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
+    : 'width=device-width, initial-scale=1';
   return `<!doctype html>
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="${viewport}">
 <title>${esc(title)}</title>
 <link rel="stylesheet" href="${prefix}assets/style.css">
 </head>
@@ -123,6 +126,11 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
       `        <button class="reader-dot" type="button" aria-label="Phần ${index + 1}"${index === 0 ? ' aria-current="true"' : ''}></button>`
     ).join('\n');
     const body = `  <article class="story">
+    <div class="reader-topbar">
+      <a class="reader-back" href="../../" aria-label="Trở về">←</a>
+      <span class="reader-top-title">${esc(story.title)}</span>
+      <span class="reader-top-count">1 / ${story.parts.length}</span>
+    </div>
     <h1 class="story-title">${esc(story.title)}</h1>
     <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
     <div class="reader-deck">
@@ -141,7 +149,7 @@ ${dotsHtml}
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
   <script src="../../assets/reader.js" defer></script>`;
-    fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../'));
+    fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true));
   }
 
   const list = stories.length
