@@ -156,14 +156,22 @@ ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.sour
 
   const heading = '  <h1 class="sr-only">Truyện</h1>\n';
   const list = stories.length
-    ? `${heading}  <div class="post-grid">
-${stories.map((story) => `    <a class="post-tile" href="posts/${story.slug}/">
-${story.cover ? `      <img class="tile-image" src="${esc(story.cover.replace('../../', ''))}" alt="">\n` : ''}      <div class="tile-caption">
-        <h2 class="tile-title">${esc(story.title)}</h2>
-        <span class="tile-date">${esc(story.date)}</span>
+    ? `${heading}  <div class="feed-topbar">
+    <span class="feed-brand">Termux.io.vn</span>
+    <span class="feed-count">1 / ${stories.length}</span>
+  </div>
+  <div class="cover-feed">
+${stories.map((story) => `    <section class="cover-slide">
+${story.cover ? `      <img class="cover-image" src="${esc(story.cover.replace('../../', ''))}" alt="">\n` : ''}      <div class="cover-shade"></div>
+      <div class="cover-content">
+        <h2 class="cover-title">${esc(story.title)}</h2>
+        <p class="cover-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
+        <a class="cover-read" href="posts/${story.slug}/">Đọc ngay</a>
       </div>
-    </a>`).join('\n')}
-  </div>`
+    </section>`).join('\n')}
+  </div>
+  <button class="feed-next" aria-label="Truyện tiếp" type="button">↓</button>
+  <script src="assets/home.js" defer></script>`
     : `${heading}  <p class="empty-state">${EMPTY_STATE}</p>`;
   fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true));
 

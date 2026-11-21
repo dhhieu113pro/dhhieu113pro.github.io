@@ -191,15 +191,27 @@ test('home page keeps a screen-reader-only heading', () => {
   assert.match(html, /<h1 class="sr-only">Truyện<\/h1>/);
 });
 
-test('home page renders one tile per story', () => {
+test('home renders a cover per story with a read link', () => {
   const newer = story({ slug: 'newer', record: { title: 'Mới hơn', byline: '', source: '', createdAt: '2026-11-21T00:00:00.000Z', parts: [{ kind: 'main', text: 'a', image: '1.webp' }] } });
   const older = story({ slug: 'older', record: { title: 'Cũ hơn', byline: '', source: '', createdAt: '2026-11-20T00:00:00.000Z', parts: [{ kind: 'main', text: 'b', image: '1.webp' }] } });
   const { outDir } = setup([older, newer]);
   const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
-  assert.equal((html.match(/class="post-tile"/g) || []).length, 2);
-  assert.equal((html.match(/class="tile-image"/g) || []).length, 2);
-  assert.match(html, /class="post-tile" href="posts\/newer\/"/);
-  assert.match(html, /class="tile-title">Mới hơn</);
+  assert.equal((html.match(/class="cover-slide"/g) || []).length, 2);
+  assert.equal((html.match(/class="cover-title"/g) || []).length, 2);
+  assert.equal((html.match(/class="cover-image"/g) || []).length, 2);
+  assert.match(html, /class="cover-read" href="posts\/newer\/"/);
+  assert.match(html, /class="cover-title">Mới hơn</);
+});
+
+test('home renders the feed top bar and enhancer', () => {
+  const newer = story({ slug: 'newer', record: { title: 'Mới', byline: '', source: '', createdAt: '2026-11-21T00:00:00.000Z', parts: [{ kind: 'main', text: 'a', image: '1.webp' }] } });
+  const older = story({ slug: 'older', record: { title: 'Cũ', byline: '', source: '', createdAt: '2026-11-20T00:00:00.000Z', parts: [{ kind: 'main', text: 'b', image: '1.webp' }] } });
+  const { outDir } = setup([older, newer]);
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.match(html, /class="feed-brand">Termux\.io\.vn</);
+  assert.match(html, /class="feed-count">1 \/ 2</);
+  assert.match(html, /class="feed-next"/);
+  assert.match(html, /src="assets\/home\.js" defer/);
 });
 
 test('post pages keep the site header and footer', () => {
@@ -209,12 +221,12 @@ test('post pages keep the site header and footer', () => {
   assert.match(html, /class="site-footer"/);
 });
 
-test('a story without an image still gets a tile', () => {
+test('a story without an image still gets a cover', () => {
   const { outDir } = setup([story({ skipImage: true })]);
   const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
-  assert.equal((html.match(/class="post-tile"/g) || []).length, 1);
-  assert.match(html, /class="tile-title">Tiêu đề</);
-  assert.doesNotMatch(html, /class="tile-image"/);
+  assert.equal((html.match(/class="cover-slide"/g) || []).length, 1);
+  assert.match(html, /class="cover-title">Tiêu đề</);
+  assert.doesNotMatch(html, /class="cover-image"/);
 });
 
 test('renders a Vietnamese empty state when the database has no stories', () => {
