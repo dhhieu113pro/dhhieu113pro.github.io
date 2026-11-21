@@ -23,6 +23,7 @@ const OTHER_TOPIC = 'Chuyện khác';
 const SITE_URL = 'https://termux.io.vn';
 const SITE_DESC = 'Termux.io.vn — những câu chuyện đời thường, đọc dạng thẻ trên điện thoại.';
 const HOME_DESC = 'Đọc truyện tâm sự đời thường của người Việt — tình yêu, hôn nhân, gia đình — dưới dạng thẻ dễ đọc trên điện thoại.';
+const TAM_SU_DESC = 'Tâm sự trên Termux.io.vn — những câu chuyện đời thường về tình yêu, hôn nhân và gia đình người Việt, đọc dạng thẻ dễ chịu trên điện thoại.';
 
 function topicOf(title, lead) {
   const haystack = `${String(title || '')} ${String(lead || '')}`.toLowerCase();
@@ -222,6 +223,37 @@ ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.sour
   <script src="../../assets/reader.js?v=${assetVersion()}" defer></script>`;
     fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true, false, story.lead));
   }
+
+  // Topic index page: group stories by keyword topic.
+  const groups = new Map(TOPICS.map((t) => [t.name, []]));
+  groups.set(OTHER_TOPIC, []);
+  for (const story of stories) groups.get(topicOf(story.title, story.lead)).push(story);
+  const topicHtml = stories.length
+    ? TOPICS.concat([{ name: OTHER_TOPIC }])
+        .filter((t) => groups.get(t.name).length)
+        .map((t) => {
+          const cards = groups.get(t.name).map((story) => {
+            const cover = story.cover
+              ? `\n          <a class="story-cover-link" href="../posts/${story.slug}/"><img class="story-cover" src="${esc(story.cover.replace('../../', '../'))}" alt=""></a>`
+              : '';
+            return `        <article class="story-card">${cover}
+          <h3 class="story-title"><a href="../posts/${story.slug}/">${esc(story.title)}</a></h3>
+          <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
+        </article>`;
+          }).join('\n');
+          return `    <section class="topic">
+      <h2 class="topic-title">${esc(t.name)}</h2>
+      <div class="story-list">
+${cards}
+      </div>
+    </section>`;
+        }).join('\n')
+    : `    <p class="empty-state">${EMPTY_STATE}</p>`;
+  const topicBody = `  <h1 class="page-title">Tâm sự</h1>
+  <p class="page-intro">Chuyện nhà, chuyện tình, chuyện đời — kể ra cho nhẹ lòng.</p>
+${topicHtml}`;
+  fs.mkdirSync(path.join(outDir, 'tam-su'), { recursive: true });
+  fs.writeFileSync(path.join(outDir, 'tam-su', 'index.html'), shell('Tâm sự — Termux.io.vn', topicBody, '../', false, false, TAM_SU_DESC));
 
   const heading = '  <h1 class="sr-only">Truyện</h1>\n';
   const list = stories.length

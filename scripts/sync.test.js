@@ -353,3 +353,35 @@ test('a story without lead falls back to the site description', () => {
   const { outDir } = setup([s]);
   assert.match(postHtml(outDir, 'a-story'), /content="Termux\.io\.vn — những câu chuyện đời thường, đọc dạng thẻ trên điện thoại\."/);
 });
+
+test('writes a topic page grouping stories by topic', () => {
+  const love = story({ slug: 'love', record: { title: 'Nghèo nên tôi chẳng dám yêu ai', byline: 'A', source: '', lead: 'x', createdAt: '2026-11-21T00:00:00.000Z', parts: [{ kind: 'main', text: 'a', image: '1.webp' }] } });
+  const wed = story({ slug: 'wed', record: { title: 'Sửa nhà cho mẹ chồng', byline: 'B', source: '', lead: 'kết hôn', createdAt: '2026-11-20T00:00:00.000Z', parts: [{ kind: 'main', text: 'b', image: '1.webp' }] } });
+  const { outDir } = setup([love, wed]);
+  const html = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
+  assert.match(html, /<h1 class="page-title">Tâm sự<\/h1>/);
+  assert.match(html, /<p class="page-intro">Chuyện nhà, chuyện tình, chuyện đời — kể ra cho nhẹ lòng\.<\/p>/);
+  assert.match(html, /<h2 class="topic-title">Tình yêu<\/h2>/);
+  assert.match(html, /<h2 class="topic-title">Hôn nhân &amp; gia đình<\/h2>/);
+  assert.ok(html.indexOf('Nghèo nên tôi') < html.indexOf('Sửa nhà cho mẹ chồng'));
+});
+
+test('topic page card links to the post and uses a ../ cover path', () => {
+  const { outDir } = setup([story()]);
+  const html = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
+  assert.match(html, /href="\.\.\/posts\/a-story\/"/);
+  assert.match(html, /src="\.\.\/assets\/img\/a-story\/2\.webp"/);
+});
+
+test('empty topics are not rendered and a missing cover still renders a card', () => {
+  const { outDir } = setup([story({ skipImage: true })]);
+  const html = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
+  assert.equal((html.match(/class="topic-title"/g) || []).length, 1);
+  assert.equal((html.match(/class="story-card"/g) || []).length, 1);
+  assert.doesNotMatch(html, /class="story-card"[\s\S]*?<img/);
+});
+
+test('topic page shows the empty state when there are no stories', () => {
+  const { outDir } = setup([]);
+  assert.match(fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8'), /Chưa có câu chuyện nào\./);
+});
