@@ -72,7 +72,7 @@ function fmtDate(iso) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
 }
 
-function shell(title, body, prefix, lockZoom = false, bare = false, description = '') {
+function shell(title, body, prefix, lockZoom = false, bare = false, description = '', showToggle = false) {
   const root = prefix || './';
   const viewport = lockZoom
     ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
@@ -81,8 +81,9 @@ function shell(title, body, prefix, lockZoom = false, bare = false, description 
   <a class="site-title" href="${root}">Termux.io.vn</a>
   <nav class="site-nav">
     <a href="${root}">Truyện</a>
+    <a href="${root}tam-su/">Tâm sự</a>
     <a href="https://github.com/dhhieu113pro">GitHub</a>
-  </nav>
+${showToggle ? themeToggle() : ''}  </nav>
 </header>`;
   const footer = bare ? '' : '<footer class="site-footer">Termux.io.vn · Những câu chuyện đời thường</footer>';
   return `<!doctype html>
@@ -253,14 +254,15 @@ ${cards}
   <p class="page-intro">Chuyện nhà, chuyện tình, chuyện đời — kể ra cho nhẹ lòng.</p>
 ${topicHtml}`;
   fs.mkdirSync(path.join(outDir, 'tam-su'), { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'tam-su', 'index.html'), shell('Tâm sự — Termux.io.vn', topicBody, '../', false, false, TAM_SU_DESC));
+  fs.writeFileSync(path.join(outDir, 'tam-su', 'index.html'), shell('Tâm sự — Termux.io.vn', topicBody, '../', false, false, TAM_SU_DESC, true));
 
   const heading = '  <h1 class="sr-only">Truyện</h1>\n';
   const list = stories.length
     ? `${heading}  <div class="feed-topbar">
-    <span class="feed-brand">Termux.io.vn</span>
-    <span class="feed-count">1 / ${stories.length}</span>
+    <div class="feed-left"><span class="feed-brand">Termux.io.vn</span></div>
+    <div class="feed-right"><span class="feed-count">1 / ${stories.length}</span><a class="feed-link" href="tam-su/">Tâm sự</a>
 ${toggle}
+    </div>
   </div>
   <div class="cover-feed">
 ${stories.map((story) => `    <section class="cover-slide">

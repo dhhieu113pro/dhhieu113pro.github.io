@@ -385,3 +385,33 @@ test('topic page shows the empty state when there are no stories', () => {
   const { outDir } = setup([]);
   assert.match(fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8'), /Chưa có câu chuyện nào\./);
 });
+
+test('every page links to the topic page', () => {
+  const { outDir } = setup([story()]);
+  assert.match(postHtml(outDir, 'a-story'), /class="site-nav"[\s\S]*?<a href="\.\.\/\.\.\/tam-su\/">Tâm sự<\/a>/);
+  const topic = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
+  assert.match(topic, /<a href="\.\.\/tam-su\/">Tâm sự<\/a>/);
+});
+
+test('home topbar links to the topic page and keeps the brand text', () => {
+  const { outDir } = setup([story()]);
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.match(html, /class="feed-brand">Termux\.io\.vn</);
+  assert.match(html, /class="feed-link" href="tam-su\/">Tâm sự<\/a>/);
+});
+
+test('home page carries its own description', () => {
+  const { outDir } = setup([story()]);
+  assert.match(fs.readFileSync(path.join(outDir, 'index.html'), 'utf8'), /Đọc truyện tâm sự đời thường của người Việt/);
+});
+
+test('a post page has exactly one theme toggle', () => {
+  const { outDir } = setup([story()]);
+  assert.equal((postHtml(outDir, 'a-story').match(/class="theme-toggle"/g) || []).length, 1);
+});
+
+test('the topic page has exactly one theme toggle', () => {
+  const { outDir } = setup([story()]);
+  const html = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
+  assert.equal((html.match(/class="theme-toggle"/g) || []).length, 1);
+});
