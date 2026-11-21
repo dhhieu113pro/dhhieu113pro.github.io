@@ -335,3 +335,21 @@ test('classifies a story into a topic by title/lead keywords', () => {
 test('first matching topic wins (tình yêu beats hôn nhân)', () => {
   assert.equal(topicOf('Yêu người sắp cưới', 'rung động với cô gái khác'), 'Tình yêu');
 });
+
+test('shell emits description, icons, and og:image', () => {
+  const s = story();
+  s.record.lead = 'Đây là phần dẫn của truyện.';
+  const { outDir } = setup([s]);
+  const post = postHtml(outDir, 'a-story');
+  assert.match(post, /<meta name="description" content="Đây là phần dẫn của truyện\.">/);
+  assert.match(post, /<link rel="icon" href="\.\.\/\.\.\/favicon\.ico">/);
+  assert.match(post, /<link rel="icon" href="\.\.\/\.\.\/assets\/logo\.png\?v=[0-9a-f]{8}" type="image\/png">/);
+  assert.match(post, /<meta property="og:image" content="https:\/\/termux\.io\.vn\/assets\/logo\.png">/);
+});
+
+test('a story without lead falls back to the site description', () => {
+  const s = story();
+  s.record.lead = '';
+  const { outDir } = setup([s]);
+  assert.match(postHtml(outDir, 'a-story'), /content="Termux\.io\.vn — những câu chuyện đời thường, đọc dạng thẻ trên điện thoại\."/);
+});

@@ -20,6 +20,10 @@ const TOPICS = [
 ];
 const OTHER_TOPIC = 'Chuyện khác';
 
+const SITE_URL = 'https://termux.io.vn';
+const SITE_DESC = 'Termux.io.vn — những câu chuyện đời thường, đọc dạng thẻ trên điện thoại.';
+const HOME_DESC = 'Đọc truyện tâm sự đời thường của người Việt — tình yêu, hôn nhân, gia đình — dưới dạng thẻ dễ đọc trên điện thoại.';
+
 function topicOf(title, lead) {
   const haystack = `${String(title || '')} ${String(lead || '')}`.toLowerCase();
   for (const topic of TOPICS) {
@@ -67,7 +71,7 @@ function fmtDate(iso) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
 }
 
-function shell(title, body, prefix, lockZoom = false, bare = false) {
+function shell(title, body, prefix, lockZoom = false, bare = false, description = '') {
   const root = prefix || './';
   const viewport = lockZoom
     ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
@@ -89,6 +93,10 @@ try { var t = localStorage.getItem('blog-theme'); document.documentElement.datas
 catch (error) { document.documentElement.dataset.theme = 'auto'; }
 </script>
 <meta name="viewport" content="${viewport}">
+<meta name="description" content="${esc(description || SITE_DESC)}">
+<link rel="icon" href="${prefix}favicon.ico">
+<link rel="icon" href="${prefix}assets/logo.png?v=${assetVersion()}" type="image/png">
+<meta property="og:image" content="${SITE_URL}/assets/logo.png">
 <title>${esc(title)}</title>
 <link rel="stylesheet" href="${prefix}assets/style.css?v=${assetVersion()}">
 </head>
@@ -159,6 +167,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
       slug,
       title: String(record.title || ''),
       byline: String(record.byline || ''),
+      lead: String(record.lead || ''),
       source: /^https?:\/\//i.test(String(record.source || '')) ? String(record.source) : '',
       date: fmtDate(record.createdAt || row.created_at),
       cover: (parts.find((part) => part.image) || {}).image || '',
@@ -211,7 +220,7 @@ ${nextStory ? `    <a class="reader-next-post" href="../${nextStory.slug}/">
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
   <script src="../../assets/reader.js?v=${assetVersion()}" defer></script>`;
-    fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true));
+    fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true, false, story.lead));
   }
 
   const heading = '  <h1 class="sr-only">Truyện</h1>\n';
@@ -234,7 +243,7 @@ ${story.cover ? `      <img class="cover-image" src="${esc(story.cover.replace('
   <button class="feed-next" aria-label="Truyện tiếp" type="button">↓</button>
   <script src="assets/home.js?v=${assetVersion()}" defer></script>`
     : `${heading}  <p class="empty-state">${EMPTY_STATE}</p>`;
-  fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true));
+  fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true, HOME_DESC));
 
   console.log(`Synced ${stories.length} story(ies) into ${outDir}`);
   return stories;
