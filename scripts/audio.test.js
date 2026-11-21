@@ -74,6 +74,18 @@ test('audio: a matching hash skips the whole story', () => {
   assert.equal(second.calls.cli.length, 0);
 });
 
+test('audio: a matching hash with a missing mp3 regenerates instead of skipping', () => {
+  const s = setup();
+  const first = tools();
+  run(bare({ ...s, ...first }));
+  fs.rmSync(path.join(s.outDir, 'assets/audio/a-story/001.mp3'));
+  const second = tools();
+  const result = run(bare({ ...s, ...second }));
+  assert.equal(result.failed, 0);
+  assert.equal(second.calls.cli.length, 2, 'both sentences regenerate');
+  assert.equal(fs.existsSync(path.join(s.outDir, 'assets/audio/a-story/001.mp3')), true);
+});
+
 test('audio: changed text clears old files and regenerates', () => {
   const s = setup();
   const first = tools();
@@ -128,6 +140,15 @@ test('audio: speechPieces keeps short text whole and never exceeds the cap', () 
   const pieces = speechPieces(long, 40);
   assert.ok(pieces.length > 1);
   assert.equal(pieces.join(' '), long);
+  for (const piece of pieces) assert.ok(piece.length <= 40, `${piece.length}: ${piece}`);
+});
+
+test('audio: a single token longer than the cap is hard-split', () => {
+  const { speechPieces } = require('./audio');
+  const token = 'a'.repeat(150);
+  const pieces = speechPieces(token, 40);
+  assert.ok(pieces.length > 1);
+  assert.equal(pieces.join(''), token);
   for (const piece of pieces) assert.ok(piece.length <= 40, `${piece.length}: ${piece}`);
 });
 

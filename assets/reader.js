@@ -29,8 +29,13 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
     const card = cardIndex >= 0 ? cards[cardIndex] : null;
     const body = card && card.querySelector('.card-body');
     if (body && typeof body.scrollTo === 'function') {
+      // offsetTop is relative to the nearest positioned ancestor, so measure
+      // against the body itself when the real DOM is available.
+      const top = typeof el.getBoundingClientRect === 'function' && typeof body.getBoundingClientRect === 'function'
+        ? el.getBoundingClientRect().top - body.getBoundingClientRect().top + (body.scrollTop || 0)
+        : (el.offsetTop || 0);
       body.scrollTo({
-        top: Math.max(0, (el.offsetTop || 0) - (body.clientHeight || 0) / 2),
+        top: Math.max(0, top - (body.clientHeight || 0) / 2),
         behavior: reducedMotion() ? 'auto' : 'smooth',
       });
     }

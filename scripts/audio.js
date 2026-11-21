@@ -47,7 +47,11 @@ function splitWords(text, cap) {
     else current = current ? `${current} ${word}` : word;
   }
   if (current) out.push(current);
-  return out;
+  // Hard-split any piece still over the cap (e.g. one unbroken token) so no
+  // single piece can exceed the CLI's single-chunk ceiling.
+  return out.flatMap((piece) =>
+    piece.length > cap ? piece.match(new RegExp(`.{1,${cap}}`, 'g')) : [piece]
+  );
 }
 
 function run({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT, modelsRoot = DEFAULT_MODELS, cli, ffmpeg, cliPath = DEFAULT_CLI, ffmpegPath = 'ffmpeg', overrides = {}, log = console.log, error = console.error } = {}) {
@@ -104,7 +108,10 @@ function run({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT, modelsRoot = DEFAULT_M
     const hash = sentenceHash(record);
     const audioDir = path.join(outDir, 'assets', 'audio', slug);
     const hashFile = path.join(audioDir, '.text');
-    if (fs.existsSync(hashFile) && fs.readFileSync(hashFile, 'utf8') === hash) continue;
+    const complete = fs.existsSync(hashFile)
+      && fs.readFileSync(hashFile, 'utf8') === hash
+      && texts.every((_, i) => fs.existsSync(path.join(audioDir, `${String(i).padStart(3, '0')}.mp3`)));
+    if (complete) continue;
 
     fs.rmSync(audioDir, { recursive: true, force: true });
     fs.mkdirSync(audioDir, { recursive: true });

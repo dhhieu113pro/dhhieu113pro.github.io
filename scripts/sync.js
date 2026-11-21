@@ -201,8 +201,13 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     const nextStory = stories.length > 1 ? stories[(storyIndex + 1) % stories.length] : null;
     const dir = path.join(postsDir, story.slug);
     fs.mkdirSync(dir, { recursive: true });
-    const hashFile = path.join(outDir, 'assets', 'audio', story.slug, '.text');
-    const hasAudio = fs.existsSync(hashFile) && fs.readFileSync(hashFile, 'utf8') === story.hash;
+    const audioDir = path.join(outDir, 'assets', 'audio', story.slug);
+    const hashFile = path.join(audioDir, '.text');
+    const sentenceCount = story.parts.reduce((n, part) => n + sentences(part.text).length, 0);
+    const hasAudio = fs.existsSync(hashFile)
+      && fs.readFileSync(hashFile, 'utf8') === story.hash
+      && Array.from({ length: sentenceCount }, (_, i) => path.join(audioDir, `${String(i).padStart(3, '0')}.mp3`))
+        .every((file) => fs.existsSync(file));
     if (!hasAudio) console.error(`sync: ${story.slug} has no current audio — run node scripts/audio.js`);
     let sentenceIndex = 0;
     const cardsHtml = story.parts.map((part) => {

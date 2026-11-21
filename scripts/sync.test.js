@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { makeFixture } = require('./fixtures/make-db');
-const { syncStories, topicOf, storyParts, sentenceTexts, sentenceHash } = require('./sync');
+const { syncStories, topicOf, storyParts, sentenceTexts, sentenceHash, sentences } = require('./sync');
 const { detectGender } = require('./gender');
 
 function setup(stories) {
@@ -504,7 +504,7 @@ test('gender: the four real stories resolve F, M, M, F', () => {
   }
 });
 
-function setupAudio({ hash } = {}) {
+function setupAudio({ hash, mp3s = true } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-audio-sync-'));
   const s = story();
   s.record.parts[1].text = 'Một. Hai.';
@@ -515,6 +515,10 @@ function setupAudio({ hash } = {}) {
     const audioDir = path.join(outDir, 'assets', 'audio', s.slug);
     fs.mkdirSync(audioDir, { recursive: true });
     fs.writeFileSync(path.join(audioDir, '.text'), hash || sentenceHash(s.record));
+    if (mp3s) {
+      const count = s.record.parts.reduce((n, part) => n + sentences(part.text).length, 0);
+      for (let i = 0; i < count; i++) fs.writeFileSync(path.join(audioDir, `${String(i).padStart(3, '0')}.mp3`), 'fake');
+    }
   }
   const messages = [];
   const original = console.error;
@@ -543,6 +547,14 @@ test('sync refuses stale or missing audio and warns with the slug', () => {
     assert.doesNotMatch(html, /class="listen-toggle"/);
     assert.ok(messages.some((m) => /a-story/.test(m) && /audio/.test(m)), messages.join('\n'));
   }
+});
+
+test('sync refuses a matching hash when an mp3 is missing', () => {
+  const { outDir, messages } = setupAudio({ mp3s: false });
+  const html = postHtml(outDir, 'a-story');
+  assert.doesNotMatch(html, /data-audio=/);
+  assert.doesNotMatch(html, /class="listen-toggle"/);
+  assert.ok(messages.some((m) => /a-story/.test(m) && /audio/.test(m)), messages.join('\n'));
 });
 
 test('the home top bar always has one listen toggle', () => {
