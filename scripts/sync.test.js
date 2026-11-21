@@ -503,3 +503,50 @@ test('gender: the four real stories resolve F, M, M, F', () => {
     assert.equal(detectGender(textRecord(text), {}).gender, expected, text);
   }
 });
+
+function setupAudio({ hash } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-audio-sync-'));
+  const s = story();
+  s.record.parts[1].text = 'Một. Hai.';
+  const dbPath = makeFixture({ dir, stories: [s] });
+  const outDir = path.join(dir, 'site');
+  fs.mkdirSync(outDir, { recursive: true });
+  if (hash !== false) {
+    const audioDir = path.join(outDir, 'assets', 'audio', s.slug);
+    fs.mkdirSync(audioDir, { recursive: true });
+    fs.writeFileSync(path.join(audioDir, '.text'), hash || sentenceHash(s.record));
+  }
+  const messages = [];
+  const original = console.error;
+  console.error = (message) => messages.push(message);
+  try {
+    syncStories({ dbPath, outDir });
+  } finally {
+    console.error = original;
+  }
+  return { outDir, messages };
+}
+
+test('sync links audio with a post-relative data-audio and a listen toggle', () => {
+  const { outDir } = setupAudio();
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /class="sentence" data-audio="\.\.\/\.\.\/assets\/audio\/a-story\/000\.mp3">Một\.<\/span>/);
+  assert.match(html, /class="sentence" data-audio="\.\.\/\.\.\/assets\/audio\/a-story\/001\.mp3">Hai\.<\/span>/);
+  assert.equal((html.match(/class="listen-toggle"/g) || []).length, 1);
+});
+
+test('sync refuses stale or missing audio and warns with the slug', () => {
+  for (const hash of [false, 'stale']) {
+    const { outDir, messages } = setupAudio({ hash });
+    const html = postHtml(outDir, 'a-story');
+    assert.doesNotMatch(html, /data-audio=/);
+    assert.doesNotMatch(html, /class="listen-toggle"/);
+    assert.ok(messages.some((m) => /a-story/.test(m) && /audio/.test(m)), messages.join('\n'));
+  }
+});
+
+test('the home top bar always has one listen toggle', () => {
+  const { outDir } = setupAudio({ hash: false });
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.equal((html.match(/class="listen-toggle"/g) || []).length, 1);
+});

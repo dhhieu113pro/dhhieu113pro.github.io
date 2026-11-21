@@ -41,6 +41,12 @@ function themeToggle() {
 </button>`;
 }
 
+function listenToggle() {
+  return `<button class="listen-toggle" type="button" aria-label="Chế độ: Nghe" aria-pressed="false">
+  <svg class="listen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>
+</button>`;
+}
+
 function assetVersion() {
   const dir = path.join(__dirname, '..', 'assets');
   const hash = crypto.createHash('sha1');
@@ -179,6 +185,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
 
     stories.push({
       slug,
+      hash: sentenceHash(record),
       title: String(record.title || ''),
       byline: String(record.byline || ''),
       lead: String(record.lead || ''),
@@ -194,9 +201,17 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     const nextStory = stories.length > 1 ? stories[(storyIndex + 1) % stories.length] : null;
     const dir = path.join(postsDir, story.slug);
     fs.mkdirSync(dir, { recursive: true });
+    const hashFile = path.join(outDir, 'assets', 'audio', story.slug, '.text');
+    const hasAudio = fs.existsSync(hashFile) && fs.readFileSync(hashFile, 'utf8') === story.hash;
+    if (!hasAudio) console.error(`sync: ${story.slug} has no current audio — run node scripts/audio.js`);
+    let sentenceIndex = 0;
     const cardsHtml = story.parts.map((part) => {
       const lines = sentences(part.text)
-        .map((line) => `          <span class="sentence">${esc(line)}</span>`)
+        .map((line) => {
+          const at = String(sentenceIndex++).padStart(3, '0');
+          const audio = hasAudio ? ` data-audio="../../assets/audio/${story.slug}/${at}.mp3"` : '';
+          return `          <span class="sentence"${audio}>${esc(line)}</span>`;
+        })
         .join('\n');
       return `      <section class="reader-card">
         <div class="card-media">${part.image ? `<img class="card-image" src="${esc(part.image)}" alt="">` : ''}</div>
@@ -214,7 +229,7 @@ ${lines}
       <a class="reader-back" href="../../" aria-label="Trở về">←</a>
       <h1 class="reader-top-title">${esc(story.title)}</h1>
       <span class="reader-top-count" aria-live="polite">1 / ${story.parts.length}</span>
-${toggle}
+${hasAudio ? `${listenToggle()}\n` : ''}${toggle}
     </div>
     <h1 class="story-title">${esc(story.title)}</h1>
     <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
@@ -273,6 +288,7 @@ ${topicHtml}`;
     ? `${heading}  <div class="feed-topbar">
     <div class="feed-left"><span class="feed-brand">Termux.io.vn</span></div>
     <div class="feed-right"><span class="feed-count">1 / ${stories.length}</span><a class="feed-link" href="tam-su/">Tâm sự</a>
+${listenToggle()}
 ${toggle}
     </div>
   </div>
