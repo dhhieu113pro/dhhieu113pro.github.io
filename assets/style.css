@@ -178,6 +178,7 @@ img {
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y; /* own scroll container: needs pan-y or it eats horizontal swipes */
   padding: 24px 22px 120px;
 }
 .reader-deck.reader-ready .reader-dots {
