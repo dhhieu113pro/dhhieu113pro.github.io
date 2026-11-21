@@ -137,6 +137,19 @@ test('generates a compact top bar', () => {
   assert.match(html, /class="reader-top-count">1 \/ 1</);
 });
 
+test('controls wrap navigation in a reader-nav row', () => {
+  const { outDir } = setup([story()]);
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /<div class="reader-controls">\n      <div class="reader-nav">\n        <button class="reader-prev"/);
+});
+
+test('post pages have a home icon link below navigation', () => {
+  const { outDir } = setup([story()]);
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /class="reader-home" href="\.\.\/\.\.\/" aria-label="Về trang chủ"/);
+  assert.match(html, /<svg[^>]*aria-hidden="true"/);
+});
+
 test('loads the reader enhancer', () => {
   const { outDir } = setup([story()]);
   assert.match(postHtml(outDir, 'a-story'), /src="\.\.\/\.\.\/assets\/reader\.js" defer/);

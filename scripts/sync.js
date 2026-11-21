@@ -141,11 +141,16 @@ ${cardsHtml}
       </div>
     </div>
     <div class="reader-controls">
-      <button class="reader-prev" aria-label="Phần trước" type="button" disabled>←</button>
-      <div class="reader-dots">
+      <div class="reader-nav">
+        <button class="reader-prev" aria-label="Phần trước" type="button" disabled>←</button>
+        <div class="reader-dots">
 ${dotsHtml}
+        </div>
+        <button class="reader-next" aria-label="Phần sau" type="button">→</button>
       </div>
-      <button class="reader-next" aria-label="Phần sau" type="button">→</button>
+      <a class="reader-home" href="../../" aria-label="Về trang chủ">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>
+      </a>
     </div>
     <p class="reader-count" aria-live="polite">1 / ${story.parts.length}</p>
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
