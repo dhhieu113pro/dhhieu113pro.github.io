@@ -89,6 +89,7 @@ ${footer}
 
 function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
   if (!fs.existsSync(dbPath)) throw new Error(`database not found: ${dbPath}`);
+  const toggle = themeToggle();
   const postsDir = path.join(outDir, 'posts');
   const imgRoot = path.join(outDir, 'assets', 'img');
   fs.rmSync(postsDir, { recursive: true, force: true });
@@ -173,6 +174,7 @@ ${lines}
       <a class="reader-back" href="../../" aria-label="Trở về">←</a>
       <h1 class="reader-top-title">${esc(story.title)}</h1>
       <span class="reader-top-count" aria-live="polite">1 / ${story.parts.length}</span>
+${toggle}
     </div>
     <h1 class="story-title">${esc(story.title)}</h1>
     <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
@@ -200,6 +202,7 @@ ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.sour
     ? `${heading}  <div class="feed-topbar">
     <span class="feed-brand">Termux.io.vn</span>
     <span class="feed-count">1 / ${stories.length}</span>
+${toggle}
   </div>
   <div class="cover-feed">
 ${stories.map((story) => `    <section class="cover-slide">

@@ -46,7 +46,7 @@ test('escapes story text and titles in generated HTML', () => {
   const html = postHtml(outDir, 'a-story');
   assert.match(html, /&lt;script&gt;x&lt;\/script&gt;/);
   assert.match(html, /a &amp; b/);
-  assert.doesNotMatch(html, /<script>/);
+  assert.doesNotMatch(html, /<script>x<\/script>/);
 });
 
 test('copies part images from the database story folder', () => {
