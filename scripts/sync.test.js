@@ -117,7 +117,9 @@ test('dots live inside the deck', () => {
   const { outDir } = setup([story()]);
   const html = postHtml(outDir, 'a-story');
   assert.ok(html.indexOf('class="reader-track"') < html.indexOf('class="reader-dot"'));
-  assert.ok(html.indexOf('class="reader-dot"') < html.indexOf('class="reader-next-post"'));
+  if (html.includes('class="reader-next-post"')) {
+    assert.ok(html.indexOf('class="reader-dot"') < html.indexOf('class="reader-next-post"'));
+  }
 });
 
 test('post links to the next story and wraps', () => {
@@ -128,6 +130,11 @@ test('post links to the next story and wraps', () => {
   assert.match(postHtml(outDir, 'newer'), /class="next-post-title">Cũ hơn</);
   assert.match(postHtml(outDir, 'older'), /class="reader-next-post" href="\.\.\/newer\/"/);
   assert.match(postHtml(outDir, 'older'), /class="next-post-title">Mới hơn</);
+});
+
+test('a single story has no next-post link', () => {
+  const { outDir } = setup([story()]);
+  assert.equal(postHtml(outDir, 'a-story').includes('reader-next-post'), false);
 });
 
 test('each sentence renders on its own line', () => {

@@ -137,7 +137,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
 
   for (let storyIndex = 0; storyIndex < stories.length; storyIndex++) {
     const story = stories[storyIndex];
-    const nextStory = stories[(storyIndex + 1) % stories.length];
+    const nextStory = stories.length > 1 ? stories[(storyIndex + 1) % stories.length] : null;
     const dir = path.join(postsDir, story.slug);
     fs.mkdirSync(dir, { recursive: true });
     const cardsHtml = story.parts.map((part) => {

@@ -121,7 +121,7 @@ img {
 }
 .card-media { display: flex; align-items: center; justify-content: center; }
 .card-media img { width: 100%; }
-.card-body { padding: 24px 22px 120px; }
+.card-body { padding: 24px 22px 12px; }
 .card-text { margin: 0 auto; max-width: 62ch; text-align: left; line-height: 1.8; }
 .sentence { display: block; margin: 0 0 0.6em; }
 .reader-dots { display: none; }
@@ -166,9 +166,8 @@ img {
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 24px 22px 12px;
+  padding: 24px 22px 120px;
 }
-.reader-deck.reader-ready .card-body { padding-bottom: 120px; }
 .reader-deck.reader-ready .reader-dots {
   position: absolute;
   left: 0;
@@ -203,8 +202,8 @@ img {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--line);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  background: var(--muted);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
 }
 .reader-dots .reader-dot[aria-current="true"]::after { background: var(--accent); }
 .reader-dots .reader-dot:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 50%; }
