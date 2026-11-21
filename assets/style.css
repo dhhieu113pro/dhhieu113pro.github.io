@@ -230,6 +230,83 @@ img {
   .reader-deck.reader-ready .reader-track { transition: none; }
 }
 
+/* Full-page reader on phones */
+.reader-topbar { display: none; }
+
+body.reader-fullscreen {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body.reader-fullscreen main { max-width: none; min-height: 0; padding: 0; }
+body.reader-fullscreen .site-header,
+body.reader-fullscreen .site-footer,
+body.reader-fullscreen .story > .story-title,
+body.reader-fullscreen .story > .story-meta,
+body.reader-fullscreen .story-source,
+body.reader-fullscreen .back-link { display: none; }
+body.reader-fullscreen .story {
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+}
+body.reader-fullscreen .reader-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: env(safe-area-inset-top) 12px 4px;
+  border-bottom: 1px solid var(--line);
+}
+body.reader-fullscreen .reader-back {
+  flex: 0 0 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+body.reader-fullscreen .reader-top-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+body.reader-fullscreen .reader-top-count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+body.reader-fullscreen .reader-deck.reader-ready {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+}
+body.reader-fullscreen .reader-deck.reader-ready ~ .reader-count { display: none; }
+body.reader-fullscreen .reader-controls {
+  margin: 0;
+  padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  touch-action: manipulation;
+}
+body.reader-fullscreen .reader-controls button {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+body.reader-fullscreen .card-media img { -webkit-touch-callout: none; }
+body.reader-fullscreen .reader-deck.is-swiping,
+body.reader-fullscreen .reader-deck.is-swiping .card-text {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   padding-top: 20px;

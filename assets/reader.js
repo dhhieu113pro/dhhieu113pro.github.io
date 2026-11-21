@@ -5,6 +5,11 @@
   const controllers = [];
   let activeDeck = null;
 
+  const phone = window.matchMedia('(max-width: 719px)');
+  const syncFullscreen = () => document.body.classList.toggle('reader-fullscreen', phone.matches);
+  phone.addEventListener('change', syncFullscreen);
+  syncFullscreen();
+
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     const entry = controllers.find((item) => item.deck === activeDeck)
@@ -19,7 +24,12 @@
     const cards = [...deck.querySelectorAll('.reader-card')];
     const controls = deck.parentElement.querySelector('.reader-controls');
     const count = deck.parentElement.querySelector('.reader-count');
+    const topCount = deck.parentElement.querySelector('.reader-top-count');
+    const source = deck.parentElement.querySelector('.story-source');
     if (!track || !cards.length || !controls || !count) return;
+
+    const lastBody = cards[cards.length - 1].querySelector('.card-body');
+    if (source && lastBody) lastBody.appendChild(source);
 
     const prev = controls.querySelector('.reader-prev');
     const next = controls.querySelector('.reader-next');
@@ -29,6 +39,7 @@
     function render() {
       track.style.transform = `translateX(-${index * 100}%)`;
       count.textContent = `${index + 1} / ${cards.length}`;
+      if (topCount) topCount.textContent = `${index + 1} / ${cards.length}`;
       prev.disabled = index === 0;
       next.disabled = index === cards.length - 1;
       dots.forEach((dot, i) => {
@@ -71,17 +82,20 @@
       startX = event.clientX;
       startY = event.clientY;
       deck.setPointerCapture(event.pointerId);
+      deck.classList.add('is-swiping');
     });
     deck.addEventListener('pointerup', (event) => {
       if (event.pointerId !== pointerId) return;
       pointerId = null;
+      deck.classList.remove('is-swiping');
       const dx = event.clientX - startX;
       const dy = event.clientY - startY;
       if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) <= Math.abs(dy)) return;
       goTo(index + (dx < 0 ? 1 : -1));
     });
-    deck.addEventListener('pointercancel', () => { pointerId = null; });
-    deck.addEventListener('lostpointercapture', () => { pointerId = null; });
+    const endSwipe = () => { pointerId = null; deck.classList.remove('is-swiping'); };
+    deck.addEventListener('pointercancel', endSwipe);
+    deck.addEventListener('lostpointercapture', endSwipe);
 
     deck.classList.add('reader-ready');
     render();
