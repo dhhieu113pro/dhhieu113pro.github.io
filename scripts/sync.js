@@ -166,7 +166,7 @@ ${story.cover ? `      <img class="cover-image" src="${esc(story.cover.replace('
       <div class="cover-content">
         <h2 class="cover-title">${esc(story.title)}</h2>
         <p class="cover-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
-        <a class="cover-read" href="posts/${story.slug}/">Đọc ngay</a>
+        <a class="cover-read" aria-label="Đọc: ${esc(story.title)}" href="posts/${story.slug}/">Đọc ngay</a>
       </div>
     </section>`).join('\n')}
   </div>

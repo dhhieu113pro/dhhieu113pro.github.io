@@ -351,24 +351,31 @@ body.home-picker .empty-state { padding: 24px 20px; }
 .feed-count { display: none; opacity: 0.9; }
 body.home-picker:has(.cover-feed.feed-ready) .feed-count { display: block; }
 
-.cover-feed {
+.cover-feed { display: block; }
+.cover-feed.feed-ready {
   height: 100vh;
   height: 100dvh;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  scroll-snap-type: y mandatory;
 }
-.cover-feed.feed-ready { scroll-snap-type: y mandatory; }
 .cover-slide {
   position: relative;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   background: var(--line);
 }
-.feed-ready .cover-slide { scroll-snap-align: start; }
+.feed-ready .cover-slide {
+  height: 100vh;
+  height: 100dvh;
+  scroll-snap-align: start;
+}
 .cover-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -411,7 +418,9 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-count { display: block; }
   touch-action: manipulation;
 }
 .cover-read:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.feed-next {
+.feed-next { display: none; }
+body.home-picker:has(.cover-feed.feed-ready) .feed-next {
+  display: block;
   position: fixed;
   right: 20px;
   bottom: calc(24px + env(safe-area-inset-bottom));

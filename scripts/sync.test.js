@@ -199,7 +199,7 @@ test('home renders a cover per story with a read link', () => {
   assert.equal((html.match(/class="cover-slide"/g) || []).length, 2);
   assert.equal((html.match(/class="cover-title"/g) || []).length, 2);
   assert.equal((html.match(/class="cover-image"/g) || []).length, 2);
-  assert.match(html, /class="cover-read" href="posts\/newer\/"/);
+  assert.match(html, /class="cover-read" aria-label="Đọc: Mới hơn" href="posts\/newer\/"/);
   assert.match(html, /class="cover-title">Mới hơn</);
 });
 
