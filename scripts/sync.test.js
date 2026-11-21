@@ -152,7 +152,10 @@ test('post pages have a home icon link below navigation', () => {
 
 test('loads the reader enhancer', () => {
   const { outDir } = setup([story()]);
-  assert.match(postHtml(outDir, 'a-story'), /src="\.\.\/\.\.\/assets\/reader\.js" defer/);
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /src="\.\.\/\.\.\/assets\/reader\.js\?v=[0-9a-f]{8}" defer/);
+  const cssVersion = html.match(/assets\/style\.css\?v=([0-9a-f]{8})/)[1];
+  assert.equal(html.match(/assets\/reader\.js\?v=([0-9a-f]{8})/)[1], cssVersion);
 });
 
 test('does not emit a non-http source link', () => {
@@ -224,7 +227,9 @@ test('home renders the feed top bar and enhancer', () => {
   assert.match(html, /class="feed-brand">Termux\.io\.vn</);
   assert.match(html, /class="feed-count">1 \/ 2</);
   assert.match(html, /class="feed-next"/);
-  assert.match(html, /src="assets\/home\.js" defer/);
+  assert.match(html, /src="assets\/home\.js\?v=[0-9a-f]{8}" defer/);
+  const cssVersion = html.match(/assets\/style\.css\?v=([0-9a-f]{8})/)[1];
+  assert.equal(html.match(/assets\/home\.js\?v=([0-9a-f]{8})/)[1], cssVersion);
 });
 
 test('post pages keep the site header and footer', () => {

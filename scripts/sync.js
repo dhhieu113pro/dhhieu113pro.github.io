@@ -3,12 +3,23 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const { DatabaseSync } = require('node:sqlite');
 
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const DEFAULT_DB = path.join(os.homedir(), '.pwterm', 'stories', 'stories.sqlite');
 const DEFAULT_OUT = path.resolve(__dirname, '..');
 const EMPTY_STATE = 'Chưa có câu chuyện nào.';
+
+function assetVersion() {
+  const dir = path.join(__dirname, '..', 'assets');
+  const hash = crypto.createHash('sha1');
+  for (const file of ['style.css', 'reader.js', 'home.js']) {
+    const file_path = path.join(dir, file);
+    if (fs.existsSync(file_path)) hash.update(fs.readFileSync(file_path));
+  }
+  return hash.digest('hex').slice(0, 8);
+}
 
 function esc(value) {
   return String(value ?? '')
@@ -43,7 +54,7 @@ function shell(title, body, prefix, lockZoom = false, bare = false) {
 <meta charset="utf-8">
 <meta name="viewport" content="${viewport}">
 <title>${esc(title)}</title>
-<link rel="stylesheet" href="${prefix}assets/style.css">
+<link rel="stylesheet" href="${prefix}assets/style.css?v=${assetVersion()}">
 </head>
 <body${bare ? ' class="home-picker"' : ''}>
 ${chrome}
@@ -155,7 +166,7 @@ ${dotsHtml}
     <p class="reader-count" aria-live="polite">1 / ${story.parts.length}</p>
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
-  <script src="../../assets/reader.js" defer></script>`;
+  <script src="../../assets/reader.js?v=${assetVersion()}" defer></script>`;
     fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true));
   }
 
@@ -176,7 +187,7 @@ ${story.cover ? `      <img class="cover-image" src="${esc(story.cover.replace('
     </section>`).join('\n')}
   </div>
   <button class="feed-next" aria-label="Truyện tiếp" type="button">↓</button>
-  <script src="assets/home.js" defer></script>`
+  <script src="assets/home.js?v=${assetVersion()}" defer></script>`
     : `${heading}  <p class="empty-state">${EMPTY_STATE}</p>`;
   fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true));
 
