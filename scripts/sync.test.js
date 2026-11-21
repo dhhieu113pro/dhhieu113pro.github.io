@@ -137,6 +137,14 @@ test('a single story has no next-post link', () => {
   assert.equal(postHtml(outDir, 'a-story').includes('reader-next-post'), false);
 });
 
+test('post emits a scroll hint per card', () => {
+  const s = story();
+  s.record.parts.push({ kind: 'main', text: 'Thêm', image: '3.webp' });
+  const { outDir } = setup([s]);
+  const html = postHtml(outDir, 'a-story');
+  assert.equal((html.match(/class="scroll-hint" aria-hidden="true"/g) || []).length, 2);
+});
+
 test('each sentence renders on its own line', () => {
   const s = story();
   s.record.parts[1].text = 'Một. Hai. Ba.';

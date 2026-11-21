@@ -149,6 +149,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
         <div class="card-body"><div class="card-text">
 ${lines}
         </div></div>
+        <span class="scroll-hint" aria-hidden="true">↓</span>
       </section>`;
     }).join('\n');
     const dotsHtml = story.parts.map((part, index) =>
