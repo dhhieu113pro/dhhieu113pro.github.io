@@ -36,18 +36,24 @@ test('home listen toggle reflects the stored preference', () => {
   assert.equal(button.classes.has('listen-on'), true);
 });
 
-test('home listen toggle starts off when nothing is stored', () => {
+test('home listen toggle starts on when nothing is stored', () => {
   const { button } = loadHome(undefined);
+  assert.equal(button.attrs['aria-pressed'], 'true');
+  assert.equal(button.classes.has('listen-on'), true);
+});
+
+test('home listen toggle stays off after an explicit off', () => {
+  const { button } = loadHome('0');
   assert.equal(button.attrs['aria-pressed'], 'false');
   assert.equal(button.classes.has('listen-on'), false);
 });
 
 test('clicking the home toggle flips and persists the preference', () => {
-  const { button, store } = loadHome(undefined);
+  const { button, store } = loadHome('0');
   button.handler();
   assert.equal(store.get('blog-listen'), '1');
   assert.equal(button.attrs['aria-pressed'], 'true');
   button.handler();
-  assert.equal(store.has('blog-listen'), false);
+  assert.equal(store.get('blog-listen'), '0');
   assert.equal(button.attrs['aria-pressed'], 'false');
 });

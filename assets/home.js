@@ -4,7 +4,7 @@
   const listenButton = document.querySelector('.listen-toggle');
   if (listenButton) {
     const readListen = () => {
-      try { return localStorage.getItem('blog-listen') === '1'; } catch (error) { return false; }
+      try { return localStorage.getItem('blog-listen') !== '0'; } catch (error) { return true; }
     };
     const paint = (on) => {
       listenButton.setAttribute('aria-pressed', String(on));
@@ -15,7 +15,7 @@
       const nextOn = !readListen();
       try {
         if (nextOn) localStorage.setItem('blog-listen', '1');
-        else localStorage.removeItem('blog-listen');
+        else localStorage.setItem('blog-listen', '0');
       } catch (error) {
         /* storage unavailable: still switch for this page */
       }

@@ -8,7 +8,7 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
   let token = 0;
 
   const prefOn = () => {
-    try { return storage.getItem('blog-listen') === '1'; } catch (error) { return false; }
+    try { return storage.getItem('blog-listen') !== '0'; } catch (error) { return true; }
   };
   const paint = (on) => {
     toggle.setAttribute('aria-pressed', String(on));
@@ -74,7 +74,7 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
   function toggleListen() {
     if (playing) {
       stopListen();
-      try { storage.removeItem('blog-listen'); } catch (error) { /* storage unavailable */ }
+      try { storage.setItem('blog-listen', '0'); } catch (error) { /* storage unavailable */ }
     } else {
       try { storage.setItem('blog-listen', '1'); } catch (error) { /* storage unavailable */ }
       startListen();
@@ -174,6 +174,22 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
           AudioCtor: window.Audio,
           reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
         });
+        // Default is ON: start audio at the first user gesture, so a tap/scroll
+        // begins playback without hitting the headphones. Autoplay on load is
+        // blocked by browsers, and a rejected play() would skip sentences.
+        let pref;
+        try { pref = window.localStorage.getItem('blog-listen') !== '0'; } catch (error) { pref = true; }
+        if (pref) {
+          const arm = (event) => {
+            document.removeEventListener('pointerdown', arm, true);
+            document.removeEventListener('keydown', arm, true);
+            // The toggle's own click decides play/stop; don't pre-start on it.
+            if (event && event.target && event.target.closest && event.target.closest('.listen-toggle')) return;
+            listen.startListen();
+          };
+          document.addEventListener('pointerdown', arm, true);
+          document.addEventListener('keydown', arm, true);
+        }
       }
     }
 

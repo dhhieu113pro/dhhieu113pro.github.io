@@ -17,42 +17,57 @@ vars:
   slug: ''
 
 steps:
-  # ---------- Home page: the toggle persists across a reload ----------
+  # ---------- Home page: default ON, explicit off persists ----------
   - setViewport: { width: 360, height: 780 }
   - goto: { url: '{{base}}/index.html', waitUntil: load }
   - waitFor: '.listen-toggle'
   - eval: |
       (() => {
         localStorage.removeItem('blog-listen');
+        location.reload();
+        return { ok: 'reset' };
+      })()
+  - waitFor: '.listen-toggle'
+  - eval: |
+      (() => {
         const btn = document.querySelector('.listen-toggle');
         if (!btn) throw new Error('no home listen-toggle');
         if (btn.getBoundingClientRect().width <= 0) throw new Error('home listen-toggle hidden at phone width');
+        if (btn.getAttribute('aria-pressed') !== 'true') throw new Error('listen should default ON with nothing stored');
+        if (!btn.classList.contains('listen-on')) throw new Error('listen-on missing on default');
         btn.click();
-        if (localStorage.getItem('blog-listen') !== '1') throw new Error('click did not persist blog-listen=1');
-        if (btn.getAttribute('aria-pressed') !== 'true') throw new Error('aria-pressed not true after click');
-        return { ok: 'home toggle persists' };
+        if (localStorage.getItem('blog-listen') !== '0') throw new Error('click did not store blog-listen=0');
+        if (btn.getAttribute('aria-pressed') !== 'false') throw new Error('aria-pressed not false after off');
+        return { ok: 'default on, explicit off stored' };
       })()
   - reload: {}
   - waitFor: '.listen-toggle'
   - eval: |
       (() => {
         const btn = document.querySelector('.listen-toggle');
-        if (btn.getAttribute('aria-pressed') !== 'true') throw new Error('preference lost across reload');
-        if (!btn.classList.contains('listen-on')) throw new Error('listen-on missing after reload');
-        return { ok: 'preference survives reload' };
+        if (btn.getAttribute('aria-pressed') !== 'false') throw new Error('off preference lost across reload');
+        return { ok: 'off preference survives reload' };
       })()
 
-  # ---------- Post page, phone: one tap starts playback ----------
+  # ---------- Post page, phone: audio starts at the first gesture ----------
   - goto: { url: '{{base}}/posts/{{slug}}/index.html', waitUntil: load }
   - waitFor: '.listen-toggle'
   - waitFor: '.sentence[data-audio]'
   - eval: |
       (() => {
-        localStorage.removeItem('blog-listen');
+        localStorage.setItem('blog-listen', '1');
+        location.reload();
+        return { ok: 'listen on' };
+      })()
+  - waitFor: '.sentence[data-audio]'
+  - eval: |
+      (() => {
         const btn = document.querySelector('.listen-toggle');
         if (btn.getBoundingClientRect().width <= 0) throw new Error('post listen-toggle hidden at phone width');
-        btn.click();
-        return { ok: 'tapped' };
+        if (document.querySelector('.sentence.playing')) throw new Error('played before any gesture');
+        // A gesture anywhere on the page should start audio, no toggle tap needed.
+        document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        return { ok: 'gesture sent' };
       })()
   - wait: 600
   - eval: |
@@ -60,7 +75,7 @@ steps:
         const btn = document.querySelector('.listen-toggle');
         if (btn.getAttribute('aria-pressed') !== 'true') throw new Error('aria-pressed not true while playing');
         const playing = document.querySelector('.sentence.playing');
-        if (!playing) throw new Error('no .sentence.playing after starting');
+        if (!playing) throw new Error('no .sentence.playing after first gesture');
         const style = getComputedStyle(playing);
         if (style.backgroundColor === 'rgba(0, 0, 0, 0)') throw new Error('playing sentence has no background');
         if (style.borderLeftWidth === '0px') throw new Error('playing sentence has no left border');
@@ -89,12 +104,12 @@ steps:
         return { ok: 'highlight followed navigation', card: at };
       })()
 
-  # Tapping again stops and clears the preference.
+  # Tapping again stops and stores an explicit off.
   - eval: |
       (() => {
         document.querySelector('.listen-toggle').click();
         if (document.querySelector('.sentence.playing')) throw new Error('highlight left after stop');
-        if (localStorage.getItem('blog-listen')) throw new Error('preference not cleared after stop');
+        if (localStorage.getItem('blog-listen') !== '0') throw new Error('stop did not store blog-listen=0');
         if (document.querySelector('.listen-toggle').getAttribute('aria-pressed') !== 'false') throw new Error('aria-pressed not false after stop');
         return { ok: 'stopped' };
       })()

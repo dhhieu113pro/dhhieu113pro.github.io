@@ -82,6 +82,12 @@ test('listen: a stored preference at load never starts playback', () => {
   assert.equal(FakeAudio.instances.every((a) => a.plays === 0), true);
 });
 
+test('listen: no stored preference paints the toggle on', () => {
+  const h = harness();
+  assert.equal(h.toggle.attrs['aria-pressed'], 'true');
+  assert.equal(h.sentences.some((s) => s.classes.has('playing')), false);
+});
+
 test('listen: starting highlights the first sentence of the visible card and plays', () => {
   const h = harness();
   h.api.startListen();
@@ -134,12 +140,12 @@ test('listen: the end of the queue stops and clears every highlight', () => {
   assert.equal(h.toggle.attrs['aria-pressed'], 'false');
 });
 
-test('listen: toggle off clears the preference and playback', () => {
+test('listen: toggle off clears playback and stores the off preference', () => {
   const h = harness(3, '1');
   h.api.toggleListen();
   assert.equal(h.audio().plays, 1);
   h.api.toggleListen();
-  assert.equal(h.store.has('blog-listen'), false);
+  assert.equal(h.store.get('blog-listen'), '0');
   assert.equal(h.audio().paused, true);
   assert.equal(h.sentences.some((s) => s.classes.has('playing')), false);
 });
