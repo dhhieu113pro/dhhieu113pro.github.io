@@ -44,7 +44,7 @@ function themeToggle() {
 function assetVersion() {
   const dir = path.join(__dirname, '..', 'assets');
   const hash = crypto.createHash('sha1');
-  for (const file of ['style.css', 'reader.js', 'home.js', 'theme.js']) {
+  for (const file of ['style.css', 'reader.js', 'home.js', 'theme.js', 'logo.png']) {
     const file_path = path.join(dir, file);
     if (fs.existsSync(file_path)) hash.update(fs.readFileSync(file_path));
   }
