@@ -103,25 +103,28 @@ narrator's gender, detected when the audio is generated.
 
 **Voice and gender**
 
-- Male narrator → voice pack `duc_tri`, female → `doan_trang` (both are
+- Detected gender is a single letter: `F` (female narrator) or `M` (male
+  narrator). `M` → voice pack `duc_tri`, `F` → `doan_trang` (both are
   "story reading" style packs that exist in `models/voices/`).
 - `record.voice` (a pack directory name) overrides everything;
-  `record.gender` (`male`/`female`) overrides the detection.
+  `record.gender` (`F`/`M`) overrides the detection.
 - **Correction lives in the blog repo, not the database.** pwterm re-writes a
   story's `record` on every re-capture, so anything stored in
   `stories.sqlite` would be silently wiped. `audio.js` reads
-  `scripts/listen-overrides.json` — `{ "<slug>": { "gender": "…", "voice": "…" } }`
+  `scripts/listen-overrides.json` — `{ "<slug>": { "gender": "F|M", "voice": "…" } }`
   — and merges it over the record. Fixing a wrong guess is a one-line edit
   in a file that survives re-crawls and is committed with the site.
 - Detection, first match wins:
   1. explicit self-description — `tôi|mình … là (người )?(phụ nữ|đàn ông|con gái|con trai)`;
-  2. narrator's spouse — `chồng tôi` / `vợ tôi` / `có vợ|chồng` /
-     `đi lấy chồng|vợ` / `vợ chồng tôi` (husband → female, wife → male);
-  3. partner nouns — `bạn gái` → male, `bạn trai` → female;
-  4. otherwise male (the catalog default), and the guess is printed so it
+  2. narrator's spouse — count whole-word `chồng` vs `vợ` over the text;
+     more `chồng` → `F`, more `vợ` → `M` (tie falls through);
+  3. partner nouns — `bạn gái` → `M`, `bạn trai` → `F`;
+  4. otherwise `M` (the catalog default), and the guess is printed so it
      can be corrected.
+- **Boundary trap:** JS `\b` is ASCII-only, so it never matches `vợ`, `phụ nữ`
+  or `đàn ông`. Use `u`-flagged `\p{L}` lookarounds instead.
 - A golden test holds four real excerpts with their expected gender
-  (female, male, male, female) so detector edits cannot silently regress.
+  (`F`, `M`, `M`, `F`) so detector edits cannot silently regress.
 
 **Markup (`scripts/sync.js`)**
 
