@@ -7,6 +7,7 @@ const os = require('os');
 const path = require('path');
 const { makeFixture } = require('./fixtures/make-db');
 const { syncStories, topicOf, storyParts, sentenceTexts, sentenceHash } = require('./sync');
+const { detectGender } = require('./gender');
 
 function setup(stories) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-sync-'));
@@ -438,4 +439,67 @@ test('sentenceHash is stable and changes with the text', () => {
   const b = { parts: [{ kind: 'main', text: 'Một. Ba.' }] };
   assert.equal(sentenceHash(a), sentenceHash(a));
   assert.notEqual(sentenceHash(a), sentenceHash(b));
+});
+
+function textRecord(text, extra = {}) {
+  return { slug: 'a-story', parts: [{ kind: 'main', text }], ...extra };
+}
+
+test('gender: explicit female self-description picks the female voice', () => {
+  const got = detectGender(textRecord('Tôi là người phụ nữ đã trải qua một lần đò.'), {});
+  assert.equal(got.gender, 'F');
+  assert.equal(got.voice, 'doan_trang');
+  assert.equal(got.source, 'rule');
+});
+
+test('gender: a husband implies a female narrator', () => {
+  assert.equal(detectGender(textRecord('Mỗi ngày về nhà tôi không dám than thở với chồng.'), {}).gender, 'F');
+});
+
+test('gender: a wife implies a male narrator', () => {
+  const got = detectGender(textRecord('Sau đám cưới, vợ tôi trao cho tôi một khoản tiền.'), {});
+  assert.equal(got.gender, 'M');
+  assert.equal(got.voice, 'duc_tri');
+});
+
+test('gender: partner nouns choose M for bạn gái and F for bạn trai', () => {
+  assert.equal(detectGender(textRecord('Tôi có bạn gái.'), {}).gender, 'M');
+  assert.equal(detectGender(textRecord('Tôi có bạn trai.'), {}).gender, 'F');
+});
+
+test('gender: no marker defaults to M', () => {
+  assert.equal(detectGender(textRecord('Tôi làm nhân viên kinh doanh.'), {}).gender, 'M');
+});
+
+test('gender: cô gái is the partner, never a narrator marker', () => {
+  assert.equal(detectGender(textRecord('Tôi từng yêu một cô gái hơn hai năm.'), {}).gender, 'M');
+});
+
+test('gender: equal chồng and vợ counts fall through to the default', () => {
+  const text = 'Tôi nghe chồng tôi nói về vợ tôi. Chồng và vợ đều về.';
+  assert.equal(detectGender(textRecord(text), {}).gender, 'M');
+});
+
+test('gender: override wins over detection', () => {
+  const got = detectGender(textRecord('Tôi là con trai duy nhất.'), { 'a-story': { gender: 'F' } });
+  assert.equal(got.gender, 'F');
+  assert.equal(got.source, 'override');
+});
+
+test('gender: voice override wins while gender is still detected', () => {
+  const got = detectGender(textRecord('Tôi có bạn trai.'), { 'a-story': { voice: 'kim_thanh' } });
+  assert.equal(got.gender, 'F');
+  assert.equal(got.voice, 'kim_thanh');
+});
+
+test('gender: the four real stories resolve F, M, M, F', () => {
+  const cases = [
+    ['Tôi là người phụ nữ đã trải qua một lần đò, không có hạnh phúc vì chồng ham chơi lười làm.', 'F'],
+    ['Tôi là con trai duy nhất, chị gái đã lấy chồng, kinh tế cũng vất vả.', 'M'],
+    ['Tôi 35 tuổi, đã có bạn gái.', 'M'],
+    ['Tôi mới kết hôn chưa đầy sáu tháng mà mỗi ngày về nhà là cảm thấy nặng nề trong lòng, không dám than thở với chồng.', 'F'],
+  ];
+  for (const [text, expected] of cases) {
+    assert.equal(detectGender(textRecord(text), {}).gender, expected, text);
+  }
 });
