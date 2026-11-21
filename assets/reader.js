@@ -97,4 +97,26 @@
   }
 
   document.querySelectorAll('.reader-deck').forEach(setup);
+
+  document.querySelectorAll('.reader-card').forEach((card) => {
+    const img = card.querySelector('.card-image');
+    if (img) {
+      card.classList.add('skeleton');
+      const done = () => card.classList.remove('skeleton');
+      if (img.complete) done();
+      else {
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      }
+    }
+    const body = card.querySelector('.card-body');
+    if (!body) return;
+    const updateHint = () => {
+      const more = body.scrollTop + body.clientHeight < body.scrollHeight - 4;
+      card.classList.toggle('hint-visible', more);
+    };
+    body.addEventListener('scroll', updateHint, { passive: true });
+    window.addEventListener('resize', updateHint);
+    updateHint();
+  });
 })();

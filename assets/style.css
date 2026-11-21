@@ -326,6 +326,41 @@ body.reader-fullscreen .reader-deck.is-swiping .card-text {
   -webkit-user-select: none;
 }
 
+/* Image skeletons and scroll hint */
+@keyframes skeleton-shimmer {
+  from { background-position: -180% 0; }
+  to { background-position: 180% 0; }
+}
+.skeleton {
+  background-image: linear-gradient(100deg, var(--line) 25%, var(--card) 45%, var(--line) 65%);
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+}
+.cover-image, .card-image { transition: opacity 220ms ease; }
+.skeleton .cover-image, .skeleton .card-image { opacity: 0; }
+.reader-deck.reader-ready .reader-card { position: relative; }
+.scroll-hint { display: none; }
+.reader-card.hint-visible .scroll-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 16px;
+  bottom: 68px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 1rem;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  .cover-image, .card-image { transition: none; }
+}
+
 /* Home cover feed */
 body.home-picker main { max-width: none; padding: 0; }
 .sr-only {

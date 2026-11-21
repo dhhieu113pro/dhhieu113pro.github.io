@@ -9,6 +9,18 @@
   const slides = [...feed.querySelectorAll('.cover-slide')];
   if (!slides.length) return;
 
+  slides.forEach((slide) => {
+    const img = slide.querySelector('.cover-image');
+    if (!img) return;
+    slide.classList.add('skeleton');
+    const done = () => slide.classList.remove('skeleton');
+    if (img.complete) done();
+    else {
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    }
+  });
+
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let index = 0;
 

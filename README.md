@@ -17,7 +17,8 @@ git add -A && git commit -m "posts: sync stories" && git push
 Post pages use a swipeable card reader: each story part is a card with the
 illustration on top and text below. Swipe, the arrow buttons, the dots, and
 the left/right arrow keys all move between parts; without JavaScript the
-cards simply stack vertically. Text has a comfortable 62-character measure
+cards simply stack vertically. Cover images show a shimmer skeleton while
+they load, and a small ↓ badge marks parts whose text scrolls. Text has a comfortable 62-character measure
 with each sentence on its own line. Dots float over the bottom of the card;
 a "Tiếp theo" bar opens the next story. On phones the post fills the screen:
 a top bar has the back arrow, title and counter, and pinch/double-tap zoom is
