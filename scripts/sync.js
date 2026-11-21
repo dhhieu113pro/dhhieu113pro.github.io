@@ -11,10 +11,18 @@ const DEFAULT_DB = path.join(os.homedir(), '.pwterm', 'stories', 'stories.sqlite
 const DEFAULT_OUT = path.resolve(__dirname, '..');
 const EMPTY_STATE = 'Chưa có câu chuyện nào.';
 
+function themeToggle() {
+  return `<button class="theme-toggle" type="button" aria-label="Chế độ: Tự động">
+  <svg class="theme-icon" data-mode="light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+  <svg class="theme-icon" data-mode="dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4a8.5 8.5 0 1 0 11.5 11.5z"/></svg>
+  <svg class="theme-icon" data-mode="auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+</button>`;
+}
+
 function assetVersion() {
   const dir = path.join(__dirname, '..', 'assets');
   const hash = crypto.createHash('sha1');
-  for (const file of ['style.css', 'reader.js', 'home.js']) {
+  for (const file of ['style.css', 'reader.js', 'home.js', 'theme.js']) {
     const file_path = path.join(dir, file);
     if (fs.existsSync(file_path)) hash.update(fs.readFileSync(file_path));
   }
@@ -59,6 +67,10 @@ function shell(title, body, prefix, lockZoom = false, bare = false) {
 <html lang="vi">
 <head>
 <meta charset="utf-8">
+<script>
+try { document.documentElement.dataset.theme = localStorage.getItem('blog-theme') || 'auto'; }
+catch (error) { document.documentElement.dataset.theme = 'auto'; }
+</script>
 <meta name="viewport" content="${viewport}">
 <title>${esc(title)}</title>
 <link rel="stylesheet" href="${prefix}assets/style.css?v=${assetVersion()}">
@@ -69,6 +81,7 @@ ${chrome}
 ${body}
 </main>
 ${footer}
+<script src="${prefix}assets/theme.js?v=${assetVersion()}" defer></script>
 </body>
 </html>
 `;

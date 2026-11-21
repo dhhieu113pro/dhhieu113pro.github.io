@@ -2,6 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
+<script>
+try { document.documentElement.dataset.theme = localStorage.getItem('blog-theme') || 'auto'; }
+catch (error) { document.documentElement.dataset.theme = 'auto'; }
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Nghèo nên tôi chẳng dám yêu ai</title>
 <link rel="stylesheet" href="../../assets/style.css?v=54b10d9d">
@@ -107,5 +111,6 @@
   <script src="../../assets/reader.js?v=54b10d9d" defer></script>
 </main>
 <footer class="site-footer">Termux.io.vn · Những câu chuyện đời thường</footer>
+<script src="../../assets/theme.js?v=54b10d9d" defer></script>
 </body>
 </html>

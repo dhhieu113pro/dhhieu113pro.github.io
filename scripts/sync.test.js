@@ -145,6 +145,34 @@ test('post emits a scroll hint per card', () => {
   assert.equal((html.match(/class="scroll-hint" aria-hidden="true"/g) || []).length, 2);
 });
 
+test('pages apply the stored theme before CSS', () => {
+  const { outDir } = setup([story()]);
+  const post = postHtml(outDir, 'a-story');
+  const home = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  for (const html of [post, home]) {
+    assert.match(html, /localStorage\.getItem\('blog-theme'\) \|\| 'auto'/);
+    assert.match(html, /dataset\.theme/);
+  }
+});
+
+test('both top bars have a theme toggle', () => {
+  const { outDir } = setup([story()]);
+  for (const html of [postHtml(outDir, 'a-story'), fs.readFileSync(path.join(outDir, 'index.html'), 'utf8')]) {
+    assert.match(html, /class="theme-toggle" type="button" aria-label="Chế độ: Tự động"/);
+    assert.equal((html.match(/class="theme-icon"/g) || []).length, 3);
+  }
+});
+
+test('theme script is cache-busted', () => {
+  const { outDir } = setup([story()]);
+  const post = postHtml(outDir, 'a-story');
+  const home = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.match(post, /src="\.\.\/\.\.\/assets\/theme\.js\?v=[0-9a-f]{8}" defer/);
+  assert.match(home, /src="assets\/theme\.js\?v=[0-9a-f]{8}" defer/);
+  const cssVersion = post.match(/assets\/style\.css\?v=([0-9a-f]{8})/)[1];
+  assert.equal(post.match(/assets\/theme\.js\?v=([0-9a-f]{8})/)[1], cssVersion);
+});
+
 test('each sentence renders on its own line', () => {
   const s = story();
   s.record.parts[1].text = 'Một. Hai. Ba.';
