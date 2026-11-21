@@ -8,6 +8,8 @@ each story in `~/.pwterm/stories/stories.sqlite` with its images in
 ## Publish new stories
 
 ```bash
+git clone https://github.com/dhhieu113pro/dhhieu113pro.github.io.git
+cd dhhieu113pro.github.io
 node scripts/sync.js
 git add -A && git commit -m "posts: sync stories" && git push
 ```

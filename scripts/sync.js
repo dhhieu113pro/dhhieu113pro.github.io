@@ -52,6 +52,7 @@ ${body}
 }
 
 function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
+  if (!fs.existsSync(dbPath)) throw new Error(`database not found: ${dbPath}`);
   const postsDir = path.join(outDir, 'posts');
   const imgRoot = path.join(outDir, 'assets', 'img');
   fs.rmSync(postsDir, { recursive: true, force: true });
@@ -79,12 +80,15 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     }
     const slug = String(row.slug || '');
     if (!SLUG_RE.test(slug)) continue;
+    if (!record || typeof record !== 'object' || Array.isArray(record)) continue;
 
     const srcDir = path.join(path.dirname(dbPath), slug);
     const destDir = path.join(imgRoot, slug);
     fs.mkdirSync(destDir, { recursive: true });
 
-    const parts = (Array.isArray(record.parts) ? record.parts : []).map((part) => {
+    const parts = (Array.isArray(record.parts) ? record.parts : [])
+      .filter((part) => part && part.kind !== 'begin')
+      .map((part) => {
       const name = String(part.image || '');
       let image = '';
       if (name && !name.includes('/') && !name.includes('..')) {
@@ -101,7 +105,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
       slug,
       title: String(record.title || ''),
       byline: String(record.byline || ''),
-      source: String(record.source || ''),
+      source: /^https?:\/\//i.test(String(record.source || '')) ? String(record.source) : '',
       date: fmtDate(record.createdAt || row.created_at),
       cover: (parts.find((part) => part.image) || {}).image || '',
       parts,
@@ -117,7 +121,7 @@ ${part.image ? `      <img class="part-image" src="${esc(part.image)}" alt="">\n
     const body = `  <article class="story">
     <h1 class="story-title">${esc(story.title)}</h1>
     <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
-${story.cover ? `    <img class="story-cover" src="${esc(story.cover)}" alt="">\n` : ''}${partsHtml}
+${partsHtml}
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>`;
     fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../'));
