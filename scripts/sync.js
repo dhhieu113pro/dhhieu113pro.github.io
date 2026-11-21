@@ -72,13 +72,13 @@ function fmtDate(iso) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
 }
 
-function shell(title, body, prefix, lockZoom = false, bare = false, description = '', showToggle = false) {
+function shell(title, body, prefix, lockZoom = false, bare = false, description = '', showToggle = false, logo = false) {
   const root = prefix || './';
   const viewport = lockZoom
     ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
     : 'width=device-width, initial-scale=1';
   const chrome = bare ? '' : `<header class="site-header">
-  <a class="site-title" href="${root}">Termux.io.vn</a>
+  <a class="site-title" href="${root}">${logo ? `<img class="brand-mark" src="${prefix}assets/logo.png?v=${assetVersion()}" alt="">` : ''}Termux.io.vn</a>
   <nav class="site-nav">
     <a href="${root}">Truyện</a>
     <a href="${root}tam-su/">Tâm sự</a>
@@ -116,6 +116,7 @@ ${footer}
 
 function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
   if (!fs.existsSync(dbPath)) throw new Error(`database not found: ${dbPath}`);
+  const hasLogo = fs.existsSync(path.join(outDir, 'assets', 'logo.png'));
   const toggle = themeToggle();
   const postsDir = path.join(outDir, 'posts');
   const imgRoot = path.join(outDir, 'assets', 'img');
@@ -222,7 +223,7 @@ ${nextStory ? `    <a class="reader-next-post" href="../${nextStory.slug}/">
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
   <script src="../../assets/reader.js?v=${assetVersion()}" defer></script>`;
-    fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true, false, story.lead));
+    fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true, false, story.lead, false, hasLogo));
   }
 
   // Topic index page: group stories by keyword topic.
@@ -254,12 +255,12 @@ ${cards}
   <p class="page-intro">Chuyện nhà, chuyện tình, chuyện đời — kể ra cho nhẹ lòng.</p>
 ${topicHtml}`;
   fs.mkdirSync(path.join(outDir, 'tam-su'), { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'tam-su', 'index.html'), shell('Tâm sự — Termux.io.vn', topicBody, '../', false, false, TAM_SU_DESC, true));
+  fs.writeFileSync(path.join(outDir, 'tam-su', 'index.html'), shell('Tâm sự — Termux.io.vn', topicBody, '../', false, false, TAM_SU_DESC, true, hasLogo));
 
   const heading = '  <h1 class="sr-only">Truyện</h1>\n';
   const list = stories.length
     ? `${heading}  <div class="feed-topbar">
-    <div class="feed-left"><span class="feed-brand">Termux.io.vn</span></div>
+    <div class="feed-left">${hasLogo ? `<img class="brand-mark" src="assets/logo.png?v=${assetVersion()}" alt="">` : ''}<span class="feed-brand">Termux.io.vn</span></div>
     <div class="feed-right"><span class="feed-count">1 / ${stories.length}</span><a class="feed-link" href="tam-su/">Tâm sự</a>
 ${toggle}
     </div>
@@ -277,7 +278,7 @@ ${story.cover ? `      <img class="cover-image" src="${esc(story.cover.replace('
   <button class="feed-next" aria-label="Truyện tiếp" type="button">↓</button>
   <script src="assets/home.js?v=${assetVersion()}" defer></script>`
     : `${heading}  <p class="empty-state">${EMPTY_STATE}</p>`;
-  fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true, HOME_DESC));
+  fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true, HOME_DESC, false, hasLogo));
 
   console.log(`Synced ${stories.length} story(ies) into ${outDir}`);
   return stories;

@@ -415,3 +415,12 @@ test('the topic page has exactly one theme toggle', () => {
   const html = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
   assert.equal((html.match(/class="theme-toggle"/g) || []).length, 1);
 });
+
+test('home emits the brand mark only when the logo file exists', () => {
+  const { dir, outDir } = setup([story()]);
+  assert.doesNotMatch(fs.readFileSync(path.join(outDir, 'index.html'), 'utf8'), /class="brand-mark"/);
+  fs.mkdirSync(path.join(outDir, 'assets'), { recursive: true });
+  fs.writeFileSync(path.join(outDir, 'assets', 'logo.png'), 'fake-png');
+  syncStories({ dbPath: path.join(dir, 'stories.sqlite'), outDir });
+  assert.match(fs.readFileSync(path.join(outDir, 'index.html'), 'utf8'), /class="brand-mark" src="assets\/logo\.png\?v=[0-9a-f]{8}"/);
+});
