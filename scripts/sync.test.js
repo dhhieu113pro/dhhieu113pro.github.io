@@ -386,11 +386,13 @@ test('topic page shows the empty state when there are no stories', () => {
   assert.match(fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8'), /Chưa có câu chuyện nào\./);
 });
 
-test('every page links to the topic page', () => {
+test('every page links only to the topic page', () => {
   const { outDir } = setup([story()]);
   assert.match(postHtml(outDir, 'a-story'), /class="site-nav"[\s\S]*?<a href="\.\.\/\.\.\/tam-su\/">Tâm sự<\/a>/);
   const topic = fs.readFileSync(path.join(outDir, 'tam-su', 'index.html'), 'utf8');
   assert.match(topic, /<a href="\.\.\/tam-su\/">Tâm sự<\/a>/);
+  assert.doesNotMatch(topic, /<a href="\.\.\/\/">Truyện<\/a>/);
+  assert.doesNotMatch(topic, /<a href="https:\/\/github\.com\/dhhieu113pro">GitHub<\/a>/);
 });
 
 test('home topbar links to the topic page and keeps the brand text', () => {

@@ -80,9 +80,7 @@ function shell(title, body, prefix, lockZoom = false, bare = false, description 
   const chrome = bare ? '' : `<header class="site-header">
   <a class="site-title" href="${root}">${logo ? `<img class="brand-mark" src="${prefix}assets/logo.png?v=${assetVersion()}" alt="">` : ''}Termux.io.vn</a>
   <nav class="site-nav">
-    <a href="${root}">Truyện</a>
     <a href="${root}tam-su/">Tâm sự</a>
-    <a href="https://github.com/dhhieu113pro">GitHub</a>
 ${showToggle ? themeToggle() : ''}  </nav>
 </header>`;
   const footer = bare ? '' : '<footer class="site-footer">Termux.io.vn · Những câu chuyện đời thường</footer>';
