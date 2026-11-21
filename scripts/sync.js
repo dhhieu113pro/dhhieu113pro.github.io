@@ -24,11 +24,19 @@ function fmtDate(iso) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
 }
 
-function shell(title, body, prefix, lockZoom = false) {
+function shell(title, body, prefix, lockZoom = false, bare = false) {
   const root = prefix || './';
   const viewport = lockZoom
     ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
     : 'width=device-width, initial-scale=1';
+  const chrome = bare ? '' : `<header class="site-header">
+  <a class="site-title" href="${root}">Termux.io.vn</a>
+  <nav class="site-nav">
+    <a href="${root}">Truyện</a>
+    <a href="https://github.com/dhhieu113pro">GitHub</a>
+  </nav>
+</header>`;
+  const footer = bare ? '' : '<footer class="site-footer">Termux.io.vn · Những câu chuyện đời thường</footer>';
   return `<!doctype html>
 <html lang="vi">
 <head>
@@ -37,18 +45,12 @@ function shell(title, body, prefix, lockZoom = false) {
 <title>${esc(title)}</title>
 <link rel="stylesheet" href="${prefix}assets/style.css">
 </head>
-<body>
-<header class="site-header">
-  <a class="site-title" href="${root}">Termux.io.vn</a>
-  <nav class="site-nav">
-    <a href="${root}">Truyện</a>
-    <a href="https://github.com/dhhieu113pro">GitHub</a>
-  </nav>
-</header>
+<body${bare ? ' class="home-picker"' : ''}>
+${chrome}
 <main>
 ${body}
 </main>
-<footer class="site-footer">Termux.io.vn · Những câu chuyện đời thường</footer>
+${footer}
 </body>
 </html>
 `;
@@ -153,16 +155,16 @@ ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.sour
   }
 
   const list = stories.length
-    ? `  <h1 class="page-title">Truyện</h1>
-  <div class="story-list">
-${stories.map((story) => `    <article class="story-card">
-${story.cover ? `      <a class="story-cover-link" href="posts/${story.slug}/"><img class="story-cover" src="${esc(story.cover.replace('../../', ''))}" alt=""></a>\n` : ''}      <h2 class="story-title"><a href="posts/${story.slug}/">${esc(story.title)}</a></h2>
-      <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>
-    </article>`).join('\n')}
+    ? `  <div class="post-grid">
+${stories.map((story) => `    <a class="post-tile" href="posts/${story.slug}/">
+${story.cover ? `      <img class="tile-image" src="${esc(story.cover.replace('../../', ''))}" alt="">\n` : ''}      <div class="tile-caption">
+        <h2 class="tile-title">${esc(story.title)}</h2>
+        <span class="tile-date">${esc(story.date)}</span>
+      </div>
+    </a>`).join('\n')}
   </div>`
-    : `  <h1 class="page-title">Truyện</h1>
-  <p class="empty-state">${EMPTY_STATE}</p>`;
-  fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, ''));
+    : `  <p class="empty-state">${EMPTY_STATE}</p>`;
+  fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true));
 
   console.log(`Synced ${stories.length} story(ies) into ${outDir}`);
   return stories;

@@ -177,6 +177,40 @@ test('keeps other images when one part image is missing', () => {
   assert.doesNotMatch(html, /2\.webp/);
 });
 
+test('home page drops header and footer', () => {
+  const { outDir } = setup([story()]);
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.doesNotMatch(html, /class="site-header"/);
+  assert.doesNotMatch(html, /class="site-footer"/);
+  assert.match(html, /<body class="home-picker">/);
+});
+
+test('home page renders one tile per story', () => {
+  const newer = story({ slug: 'newer', record: { title: 'Mới hơn', byline: '', source: '', createdAt: '2026-11-21T00:00:00.000Z', parts: [{ kind: 'main', text: 'a', image: '1.webp' }] } });
+  const older = story({ slug: 'older', record: { title: 'Cũ hơn', byline: '', source: '', createdAt: '2026-11-20T00:00:00.000Z', parts: [{ kind: 'main', text: 'b', image: '1.webp' }] } });
+  const { outDir } = setup([older, newer]);
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.equal((html.match(/class="post-tile"/g) || []).length, 2);
+  assert.equal((html.match(/class="tile-image"/g) || []).length, 2);
+  assert.match(html, /class="post-tile" href="posts\/newer\/"/);
+  assert.match(html, /class="tile-title">Mới hơn</);
+});
+
+test('post pages keep the site header and footer', () => {
+  const { outDir } = setup([story()]);
+  const html = postHtml(outDir, 'a-story');
+  assert.match(html, /class="site-header"/);
+  assert.match(html, /class="site-footer"/);
+});
+
+test('a story without an image still gets a tile', () => {
+  const { outDir } = setup([story({ skipImage: true })]);
+  const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
+  assert.equal((html.match(/class="post-tile"/g) || []).length, 1);
+  assert.match(html, /class="tile-title">Tiêu đề</);
+  assert.doesNotMatch(html, /class="tile-image"/);
+});
+
 test('renders a Vietnamese empty state when the database has no stories', () => {
   const { outDir } = setup([]);
   const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
