@@ -15,7 +15,7 @@ function makeFixture({ dir, stories }) {
   for (const s of stories) {
     insert.run(s.slug, JSON.stringify(s.record), s.record.createdAt || '');
     if (s.skipImage || !SLUG_RE.test(s.slug)) continue;
-    const imgDir = path.join(dir, 'stories', s.slug);
+    const imgDir = path.join(dir, s.slug);
     fs.mkdirSync(imgDir, { recursive: true });
     for (const part of s.record.parts || []) {
       if (part.image) fs.writeFileSync(path.join(imgDir, part.image), 'fake-webp');

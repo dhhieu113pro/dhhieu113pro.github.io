@@ -80,7 +80,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     const slug = String(row.slug || '');
     if (!SLUG_RE.test(slug)) continue;
 
-    const srcDir = path.join(path.dirname(dbPath), 'stories', slug);
+    const srcDir = path.join(path.dirname(dbPath), slug);
     const destDir = path.join(imgRoot, slug);
     fs.mkdirSync(destDir, { recursive: true });
 

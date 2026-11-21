@@ -49,6 +49,12 @@ test('escapes story text and titles in generated HTML', () => {
   assert.doesNotMatch(html, /<script>/);
 });
 
+test('copies part images from the database story folder', () => {
+  const { outDir } = setup([story()]);
+  assert.equal(fs.existsSync(path.join(outDir, 'assets', 'img', 'a-story', '1.webp')), true);
+  assert.match(postHtml(outDir, 'a-story'), /src="\.\.\/\.\.\/assets\/img\/a-story\/1\.webp"/);
+});
+
 test('rejects a slug containing path traversal', () => {
   const { dir, outDir } = setup([story({ slug: '../bad' })]);
   assert.equal(fs.existsSync(path.join(dir, 'bad')), false);
