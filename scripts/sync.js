@@ -158,7 +158,7 @@ ${lines}
     <div class="reader-topbar">
       <a class="reader-back" href="../../" aria-label="Trở về">←</a>
       <h1 class="reader-top-title">${esc(story.title)}</h1>
-      <span class="reader-top-count">1 / ${story.parts.length}</span>
+      <span class="reader-top-count" aria-live="polite">1 / ${story.parts.length}</span>
     </div>
     <h1 class="story-title">${esc(story.title)}</h1>
     <p class="story-meta">${esc(story.byline)}${story.byline && story.date ? ' · ' : ''}${esc(story.date)}</p>

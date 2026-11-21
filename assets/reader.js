@@ -22,26 +22,22 @@
   function setup(deck) {
     const track = deck.querySelector('.reader-track');
     const cards = [...deck.querySelectorAll('.reader-card')];
-    const controls = deck.parentElement.querySelector('.reader-controls');
+    const dotsContainer = deck.querySelector('.reader-dots');
     const count = deck.parentElement.querySelector('.reader-count');
     const topCount = deck.parentElement.querySelector('.reader-top-count');
     const source = deck.parentElement.querySelector('.story-source');
-    if (!track || !cards.length || !controls || !count) return;
+    if (!track || !cards.length || !dotsContainer) return;
 
     const lastBody = cards[cards.length - 1].querySelector('.card-body');
     if (source && lastBody) lastBody.appendChild(source);
 
-    const prev = controls.querySelector('.reader-prev');
-    const next = controls.querySelector('.reader-next');
-    const dots = [...controls.querySelectorAll('.reader-dot')];
+    const dots = [...dotsContainer.querySelectorAll('.reader-dot')];
     let index = 0;
 
     function render() {
       track.style.transform = `translateX(-${index * 100}%)`;
-      count.textContent = `${index + 1} / ${cards.length}`;
+      if (count) count.textContent = `${index + 1} / ${cards.length}`;
       if (topCount) topCount.textContent = `${index + 1} / ${cards.length}`;
-      prev.disabled = index === 0;
-      next.disabled = index === cards.length - 1;
       dots.forEach((dot, i) => {
         if (i === index) dot.setAttribute('aria-current', 'true');
         else dot.removeAttribute('aria-current');
@@ -65,8 +61,6 @@
     controllers.push({ deck, goTo, getIndex: () => index });
     deck.addEventListener('focusin', () => { activeDeck = deck; });
 
-    prev.addEventListener('click', () => { activeDeck = deck; goTo(index - 1); });
-    next.addEventListener('click', () => { activeDeck = deck; goTo(index + 1); });
     dots.forEach((dot, i) => dot.addEventListener('click', () => {
       activeDeck = deck;
       goTo(i);

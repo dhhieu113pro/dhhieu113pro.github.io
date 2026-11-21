@@ -155,7 +155,7 @@ test('generates a compact top bar', () => {
   const html = postHtml(outDir, 'a-story');
   assert.match(html, /class="reader-back" href="\.\.\/\.\.\/" aria-label="Trở về"/);
   assert.match(html, /class="reader-top-title">Tiêu đề</);
-  assert.match(html, /class="reader-top-count">1 \/ 1</);
+  assert.match(html, /class="reader-top-count" aria-live="polite">1 \/ 1</);
 });
 
 test('loads the reader enhancer', () => {
