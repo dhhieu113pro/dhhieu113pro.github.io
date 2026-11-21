@@ -331,7 +331,8 @@ body.reader-fullscreen .reader-deck.is-swiping .card-text {
   from { background-position: -180% 0; }
   to { background-position: 180% 0; }
 }
-.skeleton {
+.cover-slide.skeleton,
+.reader-card.skeleton .card-media {
   background-image: linear-gradient(100deg, var(--line) 25%, var(--card) 45%, var(--line) 65%);
   background-size: 220% 100%;
   animation: skeleton-shimmer 1.4s linear infinite;
@@ -357,7 +358,8 @@ body.reader-fullscreen .reader-deck.is-swiping .card-text {
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; }
+  .cover-slide.skeleton,
+  .reader-card.skeleton .card-media { animation: none; }
   .cover-image, .card-image { transition: none; }
 }
 
