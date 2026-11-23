@@ -49,5 +49,14 @@ steps:
         const cols = getComputedStyle(feed).gridTemplateColumns.split(' ').length;
         if (cols !== 1) throw new Error('expected one column on phone, got ' + cols);
         if (document.documentElement.scrollWidth > innerWidth + 1) throw new Error('horizontal overflow');
+        const count = document.querySelector('.feed-count');
+        if (getComputedStyle(count).display !== 'none') {
+          const r = count.getBoundingClientRect();
+          if (r.height > 20) throw new Error('story count wraps in the phone header: ' + r.height);
+        }
+        for (const sel of ['.feed-brand', '.feed-link']) {
+          const el = document.querySelector(sel);
+          if (el && el.getBoundingClientRect().height > 24) throw new Error(sel + ' wraps in the phone header');
+        }
         return { ok: 'single-column phone grid' };
       })()
