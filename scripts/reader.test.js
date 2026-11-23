@@ -140,6 +140,33 @@ test('listen: the end of the queue stops and clears every highlight', () => {
   assert.equal(h.toggle.attrs['aria-pressed'], 'false');
 });
 
+test('listen: unbind keeps the same audio element playing', () => {
+  const h = harness();
+  h.api.startListen();
+  const audio = h.audio();
+  h.api.unbind();
+  assert.equal(h.api.isPlaying(), true);
+  assert.equal(h.audio(), audio);
+  assert.equal(audio.paused, false);
+});
+
+test('listen: bind to a new page reuses the audio element and re-anchors', () => {
+  const h = harness(3, '1');
+  h.api.startListen();
+  const audio = h.audio();
+  const fresh = harness(3, '1');
+  h.api.bind({
+    sentences: fresh.sentences,
+    cards: fresh.cards,
+    getIndex: () => 0,
+    goTo: () => {},
+    toggle: fresh.toggle,
+  });
+  assert.equal(audio.plays, 2);
+  assert.equal(audio.paused, false);
+  assert.equal(fresh.sentences[0].classes.has('playing'), true);
+});
+
 test('listen: toggle off clears playback and stores the off preference', () => {
   const h = harness(3, '1');
   h.api.toggleListen();

@@ -3,30 +3,34 @@
 function createListen({ sentences, cards, getIndex, goTo, toggle, storage, AudioCtor, reducedMotion = () => false }) {
   const audio = new AudioCtor();
   const prefetch = new AudioCtor();
+  let ctx = { sentences, cards, getIndex, goTo, toggle };
   let playing = false;
   let current = -1;
   let token = 0;
+  let wiredToggle = null;
 
   const prefOn = () => {
     try { return storage.getItem('blog-listen') !== '0'; } catch (error) { return true; }
   };
   const paint = (on) => {
-    toggle.setAttribute('aria-pressed', String(on));
-    toggle.classList.toggle('listen-on', on);
+    const t = ctx.toggle;
+    if (!t) return;
+    t.setAttribute('aria-pressed', String(on));
+    t.classList.toggle('listen-on', on);
   };
-  const clearHighlights = () => sentences.forEach((s) => s.classList.remove('playing'));
-  const cardOf = (el) => cards.indexOf(el.closest('.reader-card'));
+  const clearHighlights = () => ctx.sentences.forEach((s) => s.classList.remove('playing'));
+  const cardOf = (el) => ctx.cards.indexOf(el.closest('.reader-card'));
 
   function playFrom(i) {
     if (!playing) return;
-    if (i >= sentences.length) { stopListen(); return; }
+    if (i >= ctx.sentences.length) { stopListen(); return; }
     current = i;
     clearHighlights();
-    const el = sentences[i];
+    const el = ctx.sentences[i];
     el.classList.add('playing');
     const cardIndex = cardOf(el);
-    if (cardIndex >= 0 && cardIndex !== getIndex()) goTo(cardIndex);
-    const card = cardIndex >= 0 ? cards[cardIndex] : null;
+    if (cardIndex >= 0 && cardIndex !== ctx.getIndex()) ctx.goTo(cardIndex);
+    const card = cardIndex >= 0 ? ctx.cards[cardIndex] : null;
     const body = card && card.querySelector('.card-body');
     if (body && typeof body.scrollTo === 'function') {
       // offsetTop is relative to the nearest positioned ancestor, so measure
@@ -40,7 +44,7 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
       });
     }
     audio.src = el.dataset.audio || '';
-    const next = sentences[i + 1];
+    const next = ctx.sentences[i + 1];
     prefetch.src = next ? next.dataset.audio || '' : '';
     const attempt = ++token;
     const result = audio.play();
@@ -56,7 +60,7 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
     if (playing) return;
     playing = true;
     paint(true);
-    let start = sentences.findIndex((s) => cardOf(s) === getIndex());
+    let start = ctx.sentences.findIndex((s) => cardOf(s) === ctx.getIndex());
     if (start < 0) start = 0;
     playFrom(start);
   }
@@ -83,175 +87,212 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
 
   function onNavigated(target) {
     if (!playing) return;
-    let i = sentences.findIndex((s) => cardOf(s) === target);
+    let i = ctx.sentences.findIndex((s) => cardOf(s) === target);
     if (i < 0) i = 0;
     playFrom(i);
   }
 
-  paint(prefOn());
-  toggle.addEventListener('click', toggleListen);
+  function wire(t) {
+    if (!t || typeof t.addEventListener !== 'function') return;
+    t.addEventListener('click', toggleListen);
+    wiredToggle = t;
+    paint(prefOn());
+  }
+  function unwire() {
+    if (wiredToggle && typeof wiredToggle.removeEventListener === 'function') {
+      wiredToggle.removeEventListener('click', toggleListen);
+    }
+    wiredToggle = null;
+  }
 
-  return { startListen, stopListen, toggleListen, onNavigated, isPlaying: () => playing };
+  // A new page reuses this player's Audio elements. With listening on, an idle
+  // player starts; a playing one re-anchors to the new story's visible card.
+  function bind(next) {
+    unwire();
+    ctx = { ...next };
+    wire(ctx.toggle);
+    if (prefOn()) {
+      if (playing) {
+        let start = ctx.sentences.findIndex((s) => cardOf(s) === ctx.getIndex());
+        if (start < 0) start = 0;
+        playFrom(start);
+      } else {
+        startListen();
+      }
+    } else if (playing) {
+      stopListen();
+    }
+  }
+
+  function unbind() {
+    unwire();
+    ctx = { ...ctx, sentences: [], cards: [] };
+  }
+
+  wire(ctx.toggle);
+
+  return { startListen, stopListen, toggleListen, onNavigated, isPlaying: () => playing, bind, unbind };
 }
 
+let listen = null;
+
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-(() => {
-  'use strict';
+  listen = createListen({
+    sentences: [], cards: [], getIndex: () => 0, goTo: () => {}, toggle: null,
+    storage: window.localStorage,
+    AudioCtor: window.Audio,
+    reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  });
 
   const SWIPE_MIN = 45;
   const controllers = [];
   let activeDeck = null;
-  let listen = null;
-
   const phone = window.matchMedia('(max-width: 719px)');
-  const syncFullscreen = () => document.body.classList.toggle('reader-fullscreen', phone.matches);
-  phone.addEventListener('change', syncFullscreen);
-  syncFullscreen();
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-    const entry = controllers.find((item) => item.deck === activeDeck)
-      || (controllers.length === 1 ? controllers[0] : null);
-    if (!entry) return;
-    event.preventDefault();
-    entry.navigate(entry.getIndex() + (event.key === 'ArrowRight' ? 1 : -1));
-  });
+  function init(signal) {
+    controllers.length = 0;
+    activeDeck = null;
+    const opts = { signal };
 
-  function setup(deck) {
-    const track = deck.querySelector('.reader-track');
-    const cards = [...deck.querySelectorAll('.reader-card')];
-    const dotsContainer = deck.querySelector('.reader-dots');
-    const count = deck.parentElement.querySelector('.reader-count');
-    const topCount = deck.parentElement.querySelector('.reader-top-count');
-    const source = deck.parentElement.querySelector('.story-source');
-    if (!track || !cards.length || !dotsContainer) return;
+    const syncFullscreen = () => document.body.classList.toggle('reader-fullscreen', phone.matches);
+    phone.addEventListener('change', syncFullscreen, opts);
+    syncFullscreen();
 
-    const lastBody = cards[cards.length - 1].querySelector('.card-body');
-    if (source && lastBody) lastBody.appendChild(source);
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      const entry = controllers.find((item) => item.deck === activeDeck)
+        || (controllers.length === 1 ? controllers[0] : null);
+      if (!entry) return;
+      event.preventDefault();
+      entry.navigate(entry.getIndex() + (event.key === 'ArrowRight' ? 1 : -1));
+    }, opts);
 
-    const dots = [...dotsContainer.querySelectorAll('.reader-dot')];
-    let index = 0;
+    let bound = false;
 
-    function render() {
-      track.style.transform = `translateX(-${index * 100}%)`;
-      if (count) count.textContent = `${index + 1} / ${cards.length}`;
-      if (topCount) topCount.textContent = `${index + 1} / ${cards.length}`;
-      dots.forEach((dot, i) => {
-        if (i === index) dot.setAttribute('aria-current', 'true');
-        else dot.removeAttribute('aria-current');
-      });
-      cards.forEach((card, i) => {
-        if (i === index) {
-          card.removeAttribute('inert');
-          card.removeAttribute('aria-hidden');
-        } else {
-          card.setAttribute('inert', '');
-          card.setAttribute('aria-hidden', 'true');
+    function setup(deck) {
+      const track = deck.querySelector('.reader-track');
+      const cards = [...deck.querySelectorAll('.reader-card')];
+      const dotsContainer = deck.querySelector('.reader-dots');
+      const count = deck.parentElement.querySelector('.reader-count');
+      const topCount = deck.parentElement.querySelector('.reader-top-count');
+      const source = deck.parentElement.querySelector('.story-source');
+      if (!track || !cards.length || !dotsContainer) return;
+
+      const lastBody = cards[cards.length - 1].querySelector('.card-body');
+      if (source && lastBody) lastBody.appendChild(source);
+
+      const dots = [...dotsContainer.querySelectorAll('.reader-dot')];
+      let index = 0;
+
+      function render() {
+        track.style.transform = `translateX(-${index * 100}%)`;
+        if (count) count.textContent = `${index + 1} / ${cards.length}`;
+        if (topCount) topCount.textContent = `${index + 1} / ${cards.length}`;
+        dots.forEach((dot, i) => {
+          if (i === index) dot.setAttribute('aria-current', 'true');
+          else dot.removeAttribute('aria-current');
+        });
+        cards.forEach((card, i) => {
+          if (i === index) {
+            card.removeAttribute('inert');
+            card.removeAttribute('aria-hidden');
+          } else {
+            card.setAttribute('inert', '');
+            card.setAttribute('aria-hidden', 'true');
+          }
+        });
+      }
+
+      function goTo(target) {
+        index = Math.max(0, Math.min(cards.length - 1, target));
+        render();
+      }
+
+      function navigate(target) {
+        goTo(target);
+        if (listen) listen.onNavigated(target);
+      }
+
+      controllers.push({ deck, goTo, navigate, getIndex: () => index });
+      deck.addEventListener('focusin', () => { activeDeck = deck; }, opts);
+
+      if (!bound) {
+        const toggle = document.querySelector('.listen-toggle');
+        const sentences = [...document.querySelectorAll('.sentence[data-audio]')];
+        if (toggle && sentences.length) {
+          listen.bind({ sentences, cards, getIndex: () => index, goTo, toggle });
+          bound = true;
         }
-      });
-    }
+      }
 
-    function goTo(target) {
-      index = Math.max(0, Math.min(cards.length - 1, target));
+      dots.forEach((dot, i) => dot.addEventListener('click', () => {
+        activeDeck = deck;
+        navigate(i);
+      }, opts));
+
+      let startX = 0;
+      let startY = 0;
+      let pointerId = null;
+      deck.addEventListener('pointerdown', (event) => {
+        if (!event.isPrimary || event.button !== 0) return;
+        if (event.target.closest('a, button')) return;
+        activeDeck = deck;
+        pointerId = event.pointerId;
+        startX = event.clientX;
+        startY = event.clientY;
+        deck.setPointerCapture(event.pointerId);
+        deck.classList.add('is-swiping');
+      }, opts);
+      deck.addEventListener('pointerup', (event) => {
+        if (event.pointerId !== pointerId) return;
+        pointerId = null;
+        deck.classList.remove('is-swiping');
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) <= Math.abs(dy)) return;
+        navigate(index + (dx < 0 ? 1 : -1));
+      }, opts);
+      const endSwipe = () => { pointerId = null; deck.classList.remove('is-swiping'); };
+      deck.addEventListener('pointercancel', endSwipe, opts);
+      deck.addEventListener('lostpointercapture', endSwipe, opts);
+
+      deck.classList.add('reader-ready');
       render();
     }
 
-    function navigate(target) {
-      goTo(target);
-      if (listen) listen.onNavigated(target);
-    }
+    document.querySelectorAll('.reader-deck').forEach(setup);
 
-    controllers.push({ deck, goTo, navigate, getIndex: () => index });
-    deck.addEventListener('focusin', () => { activeDeck = deck; });
-
-    if (!listen) {
-      const toggle = document.querySelector('.listen-toggle');
-      const sentences = [...document.querySelectorAll('.sentence[data-audio]')];
-      if (toggle && sentences.length) {
-        listen = createListen({
-          sentences, cards, getIndex: () => index, goTo, toggle,
-          storage: window.localStorage,
-          AudioCtor: window.Audio,
-          reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-        });
-        // Default is ON: start audio at the first user gesture, so a tap/scroll
-        // begins playback without hitting the headphones. Autoplay on load is
-        // blocked by browsers, and a rejected play() would skip sentences.
-        let pref;
-        try { pref = window.localStorage.getItem('blog-listen') !== '0'; } catch (error) { pref = true; }
-        if (pref) {
-          const arm = (event) => {
-            document.removeEventListener('pointerdown', arm, true);
-            document.removeEventListener('keydown', arm, true);
-            // The toggle's own click decides play/stop; don't pre-start on it.
-            if (event && event.target && event.target.closest && event.target.closest('.listen-toggle')) return;
-            listen.startListen();
-          };
-          document.addEventListener('pointerdown', arm, true);
-          document.addEventListener('keydown', arm, true);
+    document.querySelectorAll('.reader-card').forEach((card) => {
+      const img = card.querySelector('.card-image');
+      if (img) {
+        card.classList.add('skeleton');
+        const done = () => card.classList.remove('skeleton');
+        if (img.complete) done();
+        else {
+          img.addEventListener('load', done, { once: true, signal });
+          img.addEventListener('error', done, { once: true, signal });
         }
       }
-    }
-
-    dots.forEach((dot, i) => dot.addEventListener('click', () => {
-      activeDeck = deck;
-      navigate(i);
-    }));
-
-    let startX = 0;
-    let startY = 0;
-    let pointerId = null;
-    deck.addEventListener('pointerdown', (event) => {
-      if (!event.isPrimary || event.button !== 0) return;
-      if (event.target.closest('a, button')) return;
-      activeDeck = deck;
-      pointerId = event.pointerId;
-      startX = event.clientX;
-      startY = event.clientY;
-      deck.setPointerCapture(event.pointerId);
-      deck.classList.add('is-swiping');
+      const body = card.querySelector('.card-body');
+      if (!body) return;
+      const updateHint = () => {
+        const more = body.scrollTop + body.clientHeight < body.scrollHeight - 4;
+        card.classList.toggle('hint-visible', more);
+      };
+      body.addEventListener('scroll', updateHint, { passive: true, signal });
+      window.addEventListener('resize', updateHint, opts);
+      updateHint();
     });
-    deck.addEventListener('pointerup', (event) => {
-      if (event.pointerId !== pointerId) return;
-      pointerId = null;
-      deck.classList.remove('is-swiping');
-      const dx = event.clientX - startX;
-      const dy = event.clientY - startY;
-      if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) <= Math.abs(dy)) return;
-      navigate(index + (dx < 0 ? 1 : -1));
-    });
-    const endSwipe = () => { pointerId = null; deck.classList.remove('is-swiping'); };
-    deck.addEventListener('pointercancel', endSwipe);
-    deck.addEventListener('lostpointercapture', endSwipe);
-
-    deck.classList.add('reader-ready');
-    render();
   }
 
-  document.querySelectorAll('.reader-deck').forEach(setup);
+  function destroy() {
+    if (listen) listen.unbind();
+    controllers.length = 0;
+    activeDeck = null;
+    document.body.classList.remove('reader-fullscreen');
+  }
 
-  document.querySelectorAll('.reader-card').forEach((card) => {
-    const img = card.querySelector('.card-image');
-    if (img) {
-      card.classList.add('skeleton');
-      const done = () => card.classList.remove('skeleton');
-      if (img.complete) done();
-      else {
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
-      }
-    }
-    const body = card.querySelector('.card-body');
-    if (!body) return;
-    const updateHint = () => {
-      const more = body.scrollTop + body.clientHeight < body.scrollHeight - 4;
-      card.classList.toggle('hint-visible', more);
-    };
-    body.addEventListener('scroll', updateHint, { passive: true });
-    window.addEventListener('resize', updateHint);
-    updateHint();
-  });
-})();
+  window.ReaderPage = { init, destroy, listen };
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = { createListen };
