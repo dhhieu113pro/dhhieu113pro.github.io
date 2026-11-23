@@ -9,17 +9,17 @@ catch (error) { document.documentElement.dataset.theme = 'auto'; }
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Đọc truyện tâm sự đời thường của người Việt — tình yêu, hôn nhân, gia đình — dưới dạng thẻ dễ đọc trên điện thoại.">
 <link rel="icon" href="favicon.ico">
-<link rel="icon" href="assets/logo.png?v=69468cc9" type="image/png">
+<link rel="icon" href="assets/logo.png?v=29e0cc5b" type="image/png">
 <meta property="og:image" content="https://termux.io.vn/assets/logo.png">
 <title>Truyện</title>
-<link rel="stylesheet" href="assets/style.css?v=69468cc9">
+<link rel="stylesheet" href="assets/style.css?v=29e0cc5b">
 </head>
 <body class="home-picker">
 
 <main>
   <h1 class="sr-only">Truyện</h1>
   <div class="feed-topbar">
-    <div class="feed-left"><img class="brand-mark" src="assets/logo.png?v=69468cc9" alt=""><span class="feed-brand">Termux.io.vn</span></div>
+    <div class="feed-left"><img class="brand-mark" src="assets/logo.png?v=29e0cc5b" alt=""><span class="feed-brand">Termux.io.vn</span></div>
     <div class="feed-right"><span class="feed-count">1 / 4</span><a class="feed-link" href="tam-su/">Tâm sự</a>
 <button class="listen-toggle" type="button" aria-label="Chế độ: Nghe" aria-pressed="false">
   <svg class="listen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>
@@ -72,9 +72,20 @@ catch (error) { document.documentElement.dataset.theme = 'auto'; }
   <button class="feed-next" aria-label="Truyện tiếp" type="button">↓</button>
 </main>
 
-<script src="assets/theme.js?v=69468cc9" defer></script>
-<script src="assets/reader.js?v=69468cc9" defer></script>
-<script src="assets/home.js?v=69468cc9" defer></script>
-<script src="assets/app.js?v=69468cc9" defer></script>
+<div class="mini-player" hidden>
+  <div class="mini-player-info">
+    <span class="mini-player-title"></span>
+    <span class="mini-player-progress"></span>
+  </div>
+  <div class="mini-player-track"><span class="mini-player-fill"></span></div>
+  <button class="mini-player-toggle" type="button" aria-label="Tạm dừng">
+    <svg class="mini-icon mini-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <svg class="mini-icon mini-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>
+  </button>
+</div>
+<script src="assets/theme.js?v=29e0cc5b" defer></script>
+<script src="assets/reader.js?v=29e0cc5b" defer></script>
+<script src="assets/home.js?v=29e0cc5b" defer></script>
+<script src="assets/app.js?v=29e0cc5b" defer></script>
 </body>
 </html>
