@@ -558,3 +558,86 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-next {
 .brand-mark { display: inline-block; vertical-align: middle; width: 1.25em; height: 1.25em; border-radius: 6px; }
 .topic-title { font-size: 1.25rem; margin: 40px 0 16px; letter-spacing: -0.01em; }
 .page-intro { color: var(--muted); margin: -12px 0 8px; }
+
+/* Reading UI refresh — system serif body, editorial labels */
+.card-text { font-family: Georgia, "Times New Roman", serif; }
+.cover-meta {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Persistent mini player (lives in the shell, survives SPA swaps) */
+.mini-player[hidden] { display: none; }
+.mini-player {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.12);
+}
+.mini-player-info {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 4px 64px 4px 16px;
+}
+.mini-player-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.mini-player-progress {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.mini-player-track {
+  height: 3px;
+  background: var(--line);
+}
+.mini-player-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+.mini-player-toggle {
+  position: absolute;
+  right: 8px;
+  bottom: calc(4px + env(safe-area-inset-bottom));
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.mini-player-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.mini-icon { width: 20px; height: 20px; }
+.mini-play, .mini-player[data-playing="false"] .mini-pause { display: none; }
+.mini-player[data-playing="false"] .mini-play { display: block; }
+:root.has-mini-player .reader-deck.reader-ready .reader-dots { bottom: calc(70px + env(safe-area-inset-bottom)); }
+:root.has-mini-player .reader-next-post { bottom: calc(58px + env(safe-area-inset-bottom)); }
+:root.has-mini-player body.home-picker:has(.cover-feed.feed-ready) .feed-next { bottom: calc(80px + env(safe-area-inset-bottom)); }
+@media (prefers-reduced-motion: reduce) {
+  .mini-player-fill { transition: none; }
+}

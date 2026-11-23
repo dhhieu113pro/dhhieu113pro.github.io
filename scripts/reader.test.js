@@ -35,8 +35,23 @@ function sentence(card, src) {
   };
 }
 
+function mini() {
+  return {
+    root: { hidden: false, dataset: {} },
+    title: { textContent: '' },
+    progress: { textContent: '' },
+    fill: { style: { width: '' } },
+    button: {
+      handler: null,
+      setAttribute(name, value) { this[name] = value; },
+      addEventListener(type, fn) { if (type === 'click') this.handler = fn; },
+    },
+  };
+}
+
 function harness(n = 3, stored = undefined) {
   FakeAudio.instances = [];
+  const miniObj = mini();
   const scrolls = [];
   const cards = [];
   const sentences = [];
@@ -69,11 +84,13 @@ function harness(n = 3, stored = undefined) {
     getIndex: () => index,
     goTo: (target) => { index = target; },
     toggle,
+    miniPlayer: miniObj,
+    title: 'Một chuyện',
     storage,
     AudioCtor: FakeAudio,
     reducedMotion: () => true,
   });
-  return { api, sentences, cards, toggle, store, scrolls, audio: () => FakeAudio.instances[0], setIndex: (i) => { index = i; }, count: n };
+  return { api, sentences, cards, toggle, mini: miniObj, store, scrolls, audio: () => FakeAudio.instances[0], setIndex: (i) => { index = i; }, count: n };
 }
 
 test('listen: a stored preference at load never starts playback', () => {
@@ -200,4 +217,46 @@ test('listen: toggle off clears playback and stores the off preference', () => {
   assert.equal(h.store.get('blog-listen'), '0');
   assert.equal(h.audio().paused, true);
   assert.equal(h.sentences.some((s) => s.classes.has('playing')), false);
+});
+
+test('listen: mini player shows title and sentence progress', () => {
+  const h = harness();
+  h.api.startListen();
+  assert.equal(h.mini.root.hidden, false);
+  assert.equal(h.mini.title.textContent, 'Một chuyện');
+  assert.equal(h.mini.progress.textContent, '1 / 4');
+  assert.equal(h.mini.fill.style.width, '25%');
+});
+
+test('listen: progress follows sentences, not cards', () => {
+  const h = harness();
+  h.api.startListen();
+  h.audio().emit('ended');
+  assert.equal(h.mini.progress.textContent, '2 / 4');
+});
+
+test('listen: pausing keeps the bar and the preference', () => {
+  const h = harness();
+  h.api.startListen();
+  h.mini.button.handler();
+  assert.equal(h.mini.root.hidden, false);
+  assert.equal(h.mini.button['aria-label'], 'Phát tiếp');
+  assert.equal(h.audio().paused, true);
+  assert.equal(h.store.get('blog-listen'), undefined);
+});
+
+test('listen: resuming plays the current sentence again', () => {
+  const h = harness();
+  h.api.startListen();
+  h.mini.button.handler();
+  h.mini.button.handler();
+  assert.equal(h.mini.button['aria-label'], 'Tạm dừng');
+  assert.equal(h.audio().plays, 2);
+});
+
+test('listen: stopping hides the mini player', () => {
+  const h = harness();
+  h.api.startListen();
+  h.api.stopListen();
+  assert.equal(h.mini.root.hidden, true);
 });

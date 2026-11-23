@@ -125,6 +125,17 @@ ${chrome}
 ${body}
 </main>
 ${footer}
+<div class="mini-player" hidden>
+  <div class="mini-player-info">
+    <span class="mini-player-title"></span>
+    <span class="mini-player-progress"></span>
+  </div>
+  <div class="mini-player-track"><span class="mini-player-fill"></span></div>
+  <button class="mini-player-toggle" type="button" aria-label="Tạm dừng">
+    <svg class="mini-icon mini-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <svg class="mini-icon mini-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>
+  </button>
+</div>
 <script src="${prefix}assets/theme.js?v=${assetVersion()}" defer></script>
 <script src="${prefix}assets/reader.js?v=${assetVersion()}" defer></script>
 <script src="${prefix}assets/home.js?v=${assetVersion()}" defer></script>

@@ -21,6 +21,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         /* storage unavailable: still switch for this page */
       }
       paint(nextOn);
+      // Audio now lives in the shell and survives navigation, so turning the
+      // preference off here must also stop a story that is still playing.
+      if (!nextOn && typeof window.ReaderPage !== 'undefined' && window.ReaderPage.listen) {
+        window.ReaderPage.listen.stopListen();
+      }
     }, opts);
   }
 

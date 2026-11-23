@@ -583,3 +583,13 @@ test('all generated pages load the SPA scripts from the shell', () => {
     }
   }
 });
+
+test('every page carries the persistent mini player in the shell', () => {
+  const { outDir } = setup([story()]);
+  for (const file of ['index.html', 'tam-su/index.html', 'posts/a-story/index.html']) {
+    const html = fs.readFileSync(path.join(outDir, file), 'utf8');
+    assert.match(html, /class="mini-player" hidden/);
+    assert.match(html, /class="mini-player-toggle"/);
+    assert.ok(html.indexOf('class="mini-player"') < html.indexOf('assets/theme.js'));
+  }
+});
