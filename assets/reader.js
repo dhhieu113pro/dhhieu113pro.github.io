@@ -152,8 +152,9 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
   }
 
   function unbind() {
+    // Keep the queue: the Audio element lives in the shell, so the current
+    // story keeps playing while the reader browses other pages.
     unwire();
-    ctx = { ...ctx, sentences: [], cards: [] };
   }
 
   wire(ctx.toggle);

@@ -167,6 +167,15 @@ test('listen: bind to a new page reuses the audio element and re-anchors', () =>
   assert.equal(fresh.sentences[0].classes.has('playing'), true);
 });
 
+test('listen: unbind keeps the queue so playback continues while browsing', () => {
+  const h = harness();
+  h.api.startListen();
+  h.api.unbind();
+  h.audio().emit('ended');
+  assert.equal(h.api.isPlaying(), true);
+  assert.equal(h.sentences[1].classes.has('playing'), true);
+});
+
 test('listen: bind after a gesture starts playback without another tap', () => {
   const h = harness(3, '1');
   const audio = h.audio();
