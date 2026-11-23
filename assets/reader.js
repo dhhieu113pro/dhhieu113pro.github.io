@@ -1,15 +1,17 @@
 'use strict';
 
-function createListen({ sentences, cards, getIndex, goTo, toggle, storage, AudioCtor, reducedMotion = () => false }) {
+function createListen({ sentences, cards, getIndex, goTo, toggle, miniPlayer, title, storage, AudioCtor, reducedMotion = () => false }) {
   const audio = new AudioCtor();
   const prefetch = new AudioCtor();
-  let ctx = { sentences, cards, getIndex, goTo, toggle };
+  let ctx = { sentences, cards, getIndex, goTo, toggle, title };
   let playing = false;
+  let paused = false;
   let current = -1;
   let token = 0;
   let wiredToggle = null;
   let gestureSeen = false;
   let disarm = null;
+  const mini = miniPlayer || null;
 
   const prefOn = () => {
     try { return storage.getItem('blog-listen') !== '0'; } catch (error) { return true; }
@@ -23,10 +25,49 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
   const clearHighlights = () => ctx.sentences.forEach((s) => s.classList.remove('playing'));
   const cardOf = (el) => ctx.cards.indexOf(el.closest('.reader-card'));
 
+  function paintMini() {
+    if (!mini || !mini.root || !mini.title || !mini.progress || !mini.fill || !mini.button) return;
+    mini.root.hidden = !playing;
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.toggle('has-mini-player', playing);
+    }
+    if (!playing) return;
+    const total = ctx.sentences.length;
+    mini.title.textContent = ctx.title || '';
+    mini.progress.textContent = total ? `${current + 1} / ${total}` : '';
+    mini.fill.style.width = total ? `${((current + 1) / total) * 100}%` : '0%';
+    mini.button.setAttribute('aria-label', paused ? 'Phát tiếp' : 'Tạm dừng');
+    mini.root.dataset.playing = String(!paused);
+  }
+
+  function pauseListen() {
+    if (!playing || paused) return;
+    paused = true;
+    audio.pause();
+    paintMini();
+  }
+
+  function resumeListen() {
+    if (!playing || !paused) return;
+    paused = false;
+    paintMini();
+    const attempt = ++token;
+    const result = audio.play();
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => { if (playing && token === attempt) playFrom(current + 1); });
+    }
+  }
+
+  if (mini && mini.button && typeof mini.button.addEventListener === 'function') {
+    mini.button.addEventListener('click', () => (paused ? resumeListen() : pauseListen()));
+  }
+
   function playFrom(i) {
     if (!playing) return;
     if (i >= ctx.sentences.length) { stopListen(); return; }
     current = i;
+    paused = false;
+    paintMini();
     clearHighlights();
     const el = ctx.sentences[i];
     el.classList.add('playing');
@@ -83,7 +124,9 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
     if (playing) return;
     gestureSeen = true;
     playing = true;
+    paused = false;
     paint(true);
+    paintMini();
     let start = ctx.sentences.findIndex((s) => cardOf(s) === ctx.getIndex());
     if (start < 0) start = 0;
     playFrom(start);
@@ -96,7 +139,9 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
     audio.src = '';
     prefetch.src = '';
     clearHighlights();
+    paused = false;
     paint(false);
+    paintMini();
   }
 
   function toggleListen() {
@@ -149,6 +194,7 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
     } else if (playing) {
       stopListen();
     }
+    paintMini();
   }
 
   function unbind() {
@@ -159,14 +205,26 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
 
   wire(ctx.toggle);
 
-  return { startListen, stopListen, toggleListen, onNavigated, isPlaying: () => playing, bind, unbind, noteGesture, arm };
+  return {
+    startListen, stopListen, toggleListen, onNavigated,
+    pauseListen, resumeListen, isPlaying: () => playing,
+    bind, unbind, noteGesture, arm,
+  };
 }
 
 let listen = null;
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  const miniRoot = document.querySelector('.mini-player');
   listen = createListen({
     sentences: [], cards: [], getIndex: () => 0, goTo: () => {}, toggle: null,
+    miniPlayer: miniRoot ? {
+      root: miniRoot,
+      title: miniRoot.querySelector('.mini-player-title'),
+      progress: miniRoot.querySelector('.mini-player-progress'),
+      fill: miniRoot.querySelector('.mini-player-fill'),
+      button: miniRoot.querySelector('.mini-player-toggle'),
+    } : null,
     storage: window.localStorage,
     AudioCtor: window.Audio,
     reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -248,7 +306,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         const toggle = document.querySelector('.listen-toggle');
         const sentences = [...document.querySelectorAll('.sentence[data-audio]')];
         if (toggle && sentences.length) {
-          listen.bind({ sentences, cards, getIndex: () => index, goTo, toggle });
+          const heading = document.querySelector('.reader-top-title, .story-title');
+          listen.bind({
+            sentences, cards, getIndex: () => index, goTo, toggle,
+            title: heading ? heading.textContent.trim() : '',
+          });
           bound = true;
         }
       }
