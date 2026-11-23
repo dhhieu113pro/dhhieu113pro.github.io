@@ -37,6 +37,14 @@ test('home toggle is wired once, so one click is one toggle', () => {
   assert.equal(button.listenerCount, 1);
 });
 
+test('turning listening off on home stops the persistent player', () => {
+  const { button } = loadHome('1');
+  let stopped = 0;
+  global.window.ReaderPage = { listen: { stopListen: () => { stopped++; } } };
+  button.handler();
+  assert.equal(stopped, 1);
+});
+
 test('home exposes an init/destroy lifecycle', () => {
   loadHome();
   assert.equal(typeof global.window.HomePage.init, 'function');

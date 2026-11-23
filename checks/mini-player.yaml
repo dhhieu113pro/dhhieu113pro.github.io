@@ -1,0 +1,73 @@
+# Browser check for the persistent mini player.
+# Serve the worktree over HTTP first (fetch/DOMParser need a real origin):
+#
+#   cd <worktree> && node /path/to/static-server.js &
+#   node ~/pwterm/bin/pwterm.js run checks/mini-player.yaml --var base=http://127.0.0.1:8123
+
+timeout: 120000
+
+vars:
+  base: 'http://127.0.0.1:8123'
+
+steps:
+  - setViewport: { width: 360, height: 780 }
+  - goto: { url: '{{base}}/index.html', waitUntil: load }
+  - waitFor: '.cover-feed'
+  - eval: |
+      (() => { localStorage.removeItem('blog-listen'); return { ok: 'reset' }; })()
+
+  - click: '.cover-read'
+  - waitFor: '.reader-deck'
+  - wait: 800
+  - eval: |
+      (() => {
+        const bar = document.querySelector('.mini-player');
+        if (!bar) throw new Error('no mini player in shell');
+        if (bar.hidden) throw new Error('mini player hidden while listening');
+        const title = bar.querySelector('.mini-player-title').textContent.trim();
+        if (!title) throw new Error('mini player has no story title');
+        const progress = bar.querySelector('.mini-player-progress').textContent.trim();
+        if (!/^\d+ \/ \d+$/.test(progress)) throw new Error('bad progress: ' + progress);
+        const label = bar.querySelector('.mini-player-toggle').getAttribute('aria-label');
+        if (label !== 'Tạm dừng') throw new Error('bad pause label: ' + label);
+        const r = bar.getBoundingClientRect();
+        if (r.left < 0 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || r.top < 0) {
+          throw new Error('mini player outside viewport: ' + JSON.stringify(r));
+        }
+        return { ok: 'mini player visible', title, progress };
+      })()
+
+  - eval: |
+      (() => {
+        document.querySelector('.mini-player-toggle').click();
+        const label = document.querySelector('.mini-player-toggle').getAttribute('aria-label');
+        if (label !== 'Phát tiếp') throw new Error('pause did not switch label: ' + label);
+        if (document.querySelector('.mini-player').hidden) throw new Error('pause hid the bar');
+        if (localStorage.getItem('blog-listen') === '0') throw new Error('pause changed the preference');
+        return { ok: 'paused without losing preference' };
+      })()
+  - eval: |
+      (() => {
+        document.querySelector('.mini-player-toggle').click();
+        const label = document.querySelector('.mini-player-toggle').getAttribute('aria-label');
+        if (label !== 'Tạm dừng') throw new Error('resume did not switch label: ' + label);
+        return { ok: 'resumed' };
+      })()
+
+  # The bar lives in the shell: it must survive an SPA trip back to the feed.
+  - eval: |
+      (() => { document.querySelector('.reader-back').click(); return { ok: 'back' }; })()
+  - waitFor: '.cover-feed'
+  - eval: |
+      (() => {
+        const bar = document.querySelector('.mini-player');
+        if (!bar || bar.hidden) throw new Error('mini player lost on navigation');
+        return { ok: 'bar survived navigation' };
+      })()
+  - eval: |
+      (() => {
+        document.querySelector('.listen-toggle').click();
+        const bar = document.querySelector('.mini-player');
+        if (!bar.hidden) throw new Error('bar stayed visible after stop');
+        return { ok: 'bar hidden on stop' };
+      })()
