@@ -635,9 +635,9 @@ body.home-picker:has(.cover-feed.feed-ready) .feed-next {
 .mini-icon { width: 20px; height: 20px; }
 .mini-play, .mini-player[data-playing="false"] .mini-pause { display: none; }
 .mini-player[data-playing="false"] .mini-play { display: block; }
-body.has-mini-player .reader-dots { bottom: calc(70px + env(safe-area-inset-bottom)); }
-body.has-mini-player .reader-next-post { bottom: calc(58px + env(safe-area-inset-bottom)); }
-body.has-mini-player .feed-next { bottom: calc(80px + env(safe-area-inset-bottom)); }
+:root.has-mini-player .reader-deck.reader-ready .reader-dots { bottom: calc(70px + env(safe-area-inset-bottom)); }
+:root.has-mini-player .reader-next-post { bottom: calc(58px + env(safe-area-inset-bottom)); }
+:root.has-mini-player body.home-picker:has(.cover-feed.feed-ready) .feed-next { bottom: calc(80px + env(safe-area-inset-bottom)); }
 @media (prefers-reduced-motion: reduce) {
   .mini-player-fill { transition: none; }
 }

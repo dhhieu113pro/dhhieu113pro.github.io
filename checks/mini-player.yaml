@@ -62,6 +62,13 @@ steps:
       (() => {
         const bar = document.querySelector('.mini-player');
         if (!bar || bar.hidden) throw new Error('mini player lost on navigation');
+        if (!document.documentElement.classList.contains('has-mini-player')) {
+          throw new Error('mini player spacing class lost on navigation');
+        }
+        const dots = document.querySelector('.feed-next').getBoundingClientRect();
+        if (dots.bottom > bar.getBoundingClientRect().top + 1) {
+          throw new Error('mini player overlaps the next-story button');
+        }
         return { ok: 'bar survived navigation' };
       })()
   - eval: |

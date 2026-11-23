@@ -28,8 +28,9 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, miniPlayer, ti
   function paintMini() {
     if (!mini || !mini.root || !mini.title || !mini.progress || !mini.fill || !mini.button) return;
     mini.root.hidden = !playing;
-    if (typeof document !== 'undefined' && document.body) {
-      document.body.classList.toggle('has-mini-player', playing);
+    // The root element survives SPA swaps; body.className does not.
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.classList.toggle('has-mini-player', playing);
     }
     if (!playing) return;
     const total = ctx.sentences.length;
