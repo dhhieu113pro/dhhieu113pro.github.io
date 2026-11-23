@@ -406,6 +406,9 @@ body.home-picker .empty-state { padding: 24px 20px; }
 .feed-brand { font-weight: 700; text-transform: uppercase; }
 .feed-count { display: block; color: var(--muted); opacity: 1; }
 .feed-left, .feed-right { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 480px) {
+  .feed-count { display: none; }
+}
 
 .cover-feed {
   display: grid;
