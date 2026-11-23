@@ -70,6 +70,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const link = target.closest('a[href]');
     if (!link || !shouldIntercept(link, location)) return;
     event.preventDefault();
+    if (typeof window.ReaderPage !== 'undefined' && window.ReaderPage.listen) {
+      window.ReaderPage.listen.noteGesture();
+    }
     navigate(link.href, true);
   });
 

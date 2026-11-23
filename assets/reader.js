@@ -8,6 +8,8 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
   let current = -1;
   let token = 0;
   let wiredToggle = null;
+  let gestureSeen = false;
+  let disarm = null;
 
   const prefOn = () => {
     try { return storage.getItem('blog-listen') !== '0'; } catch (error) { return true; }
@@ -56,8 +58,30 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
   audio.addEventListener('ended', () => { if (playing) playFrom(current + 1); });
   audio.addEventListener('error', () => { if (playing) playFrom(current + 1); });
 
+  function noteGesture() {
+    gestureSeen = true;
+  }
+
+  function arm() {
+    if (disarm || playing || !prefOn()) return;
+    if (typeof document === 'undefined') return;
+    const handler = () => {
+      disarm();
+      noteGesture();
+      if (prefOn()) startListen();
+    };
+    document.addEventListener('pointerdown', handler, true);
+    document.addEventListener('keydown', handler, true);
+    disarm = () => {
+      document.removeEventListener('pointerdown', handler, true);
+      document.removeEventListener('keydown', handler, true);
+      disarm = null;
+    };
+  }
+
   function startListen() {
     if (playing) return;
+    gestureSeen = true;
     playing = true;
     paint(true);
     let start = ctx.sentences.findIndex((s) => cardOf(s) === ctx.getIndex());
@@ -105,8 +129,9 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
     wiredToggle = null;
   }
 
-  // A new page reuses this player's Audio elements. With listening on, an idle
-  // player starts; a playing one re-anchors to the new story's visible card.
+  // A new page reuses this player's Audio elements. A playing queue re-anchors
+  // to the new story; an idle one waits for a gesture unless this navigation
+  // already carried one (SPA clicks call noteGesture).
   function bind(next) {
     unwire();
     ctx = { ...next };
@@ -116,8 +141,10 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
         let start = ctx.sentences.findIndex((s) => cardOf(s) === ctx.getIndex());
         if (start < 0) start = 0;
         playFrom(start);
-      } else {
+      } else if (gestureSeen) {
         startListen();
+      } else {
+        arm();
       }
     } else if (playing) {
       stopListen();
@@ -131,7 +158,7 @@ function createListen({ sentences, cards, getIndex, goTo, toggle, storage, Audio
 
   wire(ctx.toggle);
 
-  return { startListen, stopListen, toggleListen, onNavigated, isPlaying: () => playing, bind, unbind };
+  return { startListen, stopListen, toggleListen, onNavigated, isPlaying: () => playing, bind, unbind, noteGesture, arm };
 }
 
 let listen = null;

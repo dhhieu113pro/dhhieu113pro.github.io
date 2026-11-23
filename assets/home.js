@@ -95,7 +95,4 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   }
 
   window.HomePage = { init, destroy };
-
-  // Paint the first document's toggle before app.js runs its first init.
-  setupToggle();
 }

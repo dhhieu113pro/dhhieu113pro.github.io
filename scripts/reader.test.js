@@ -167,6 +167,22 @@ test('listen: bind to a new page reuses the audio element and re-anchors', () =>
   assert.equal(fresh.sentences[0].classes.has('playing'), true);
 });
 
+test('listen: bind after a gesture starts playback without another tap', () => {
+  const h = harness(3, '1');
+  const audio = h.audio();
+  const fresh = harness(3, '1');
+  h.api.noteGesture();
+  h.api.bind({
+    sentences: fresh.sentences,
+    cards: fresh.cards,
+    getIndex: () => 0,
+    goTo: () => {},
+    toggle: fresh.toggle,
+  });
+  assert.equal(audio.plays, 1);
+  assert.equal(fresh.sentences[0].classes.has('playing'), true);
+});
+
 test('listen: toggle off clears playback and stores the off preference', () => {
   const h = harness(3, '1');
   h.api.toggleListen();
