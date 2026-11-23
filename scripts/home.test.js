@@ -12,8 +12,9 @@ function loadHome(stored) {
     attrs: {},
     classes: new Set(),
     handler: null,
+    listenerCount: 0,
     setAttribute(name, value) { this.attrs[name] = value; },
-    addEventListener(type, fn) { if (type === 'click') this.handler = fn; },
+    addEventListener(type, fn) { if (type === 'click') { this.handler = fn; this.listenerCount++; } },
     classList: {
       toggle(name, on) { if (on) button.classes.add(name); else button.classes.delete(name); },
     },
@@ -27,8 +28,20 @@ function loadHome(stored) {
   global.window = {};
   delete require.cache[HOME];
   require(HOME);
+  global.window.HomePage.init(new AbortController().signal);
   return { button, store };
 }
+
+test('home toggle is wired once, so one click is one toggle', () => {
+  const { button } = loadHome('1');
+  assert.equal(button.listenerCount, 1);
+});
+
+test('home exposes an init/destroy lifecycle', () => {
+  loadHome();
+  assert.equal(typeof global.window.HomePage.init, 'function');
+  assert.equal(typeof global.window.HomePage.destroy, 'function');
+});
 
 test('home listen toggle reflects the stored preference', () => {
   const { button } = loadHome('1');

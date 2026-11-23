@@ -573,3 +573,13 @@ test('the home top bar always has one listen toggle', () => {
   const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');
   assert.equal((html.match(/class="listen-toggle"/g) || []).length, 1);
 });
+
+test('all generated pages load the SPA scripts from the shell', () => {
+  const { outDir } = setup([story()]);
+  for (const file of ['index.html', 'tam-su/index.html', 'posts/a-story/index.html']) {
+    const html = fs.readFileSync(path.join(outDir, file), 'utf8');
+    for (const script of ['app.js', 'reader.js', 'home.js']) {
+      assert.match(html, new RegExp(`assets/${script}\\?v=[0-9a-f]{8}`));
+    }
+  }
+});

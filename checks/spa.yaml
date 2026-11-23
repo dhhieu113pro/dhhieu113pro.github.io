@@ -1,0 +1,80 @@
+# Browser check for SPA navigation with persistent audio.
+# Serve the worktree over HTTP first (fetch/DOMParser need a real origin):
+#
+#   cd <worktree> && node /path/to/static-server.js &
+#   node ~/pwterm/bin/pwterm.js run checks/spa.yaml --var base=http://127.0.0.1:8123
+#
+# Assertions throw inside eval: a throw fails the step.
+
+timeout: 120000
+
+vars:
+  base: 'http://127.0.0.1:8123'
+  slug: 'ngheo-nen-toi-chang-dam-yeu-ai'
+
+steps:
+  - setViewport: { width: 360, height: 780 }
+  - goto: { url: '{{base}}/index.html', waitUntil: load }
+  - waitFor: '.cover-feed'
+  - eval: |
+      (() => {
+        localStorage.removeItem('blog-listen');
+        window.__navCount = 0;
+        history.pushState = new Proxy(history.pushState, {
+          apply(target, self, args) { window.__navCount++; return Reflect.apply(target, self, args); },
+        });
+        return { ok: 'instrumented' };
+      })()
+
+  # One touch on a cover opens the story in place and starts listening.
+  - click: '.cover-read'
+  - waitFor: '.reader-deck'
+  - eval: |
+      (() => {
+        if (location.pathname.indexOf('/posts/') < 0) throw new Error('URL did not change to post');
+        if (window.__navCount !== 1) throw new Error('pushState count ' + window.__navCount);
+        if (document.querySelector('body.home-picker')) throw new Error('body class not swapped');
+        return { ok: 'post loaded via SPA' };
+      })()
+  - wait: 800
+  - eval: |
+      (() => {
+        const playing = document.querySelector('.sentence.playing');
+        if (!playing) throw new Error('no audio highlight after opening a story with listen on');
+        return { ok: 'listening started from one touch', text: playing.textContent.trim().slice(0, 40) };
+      })()
+
+  # Back to the feed: audio keeps playing, no second tap needed.
+  - eval: |
+      (() => {
+        document.querySelector('.reader-back').click();
+        return { ok: 'back clicked' };
+      })()
+  - waitFor: '.cover-feed'
+  - eval: |
+      (() => {
+        if (window.__navCount !== 2) throw new Error('pushState count ' + window.__navCount);
+        if (!document.body.classList.contains('home-picker')) throw new Error('body class not restored');
+        if (!window.ReaderPage || !window.ReaderPage.listen.isPlaying()) throw new Error('audio stopped on navigation');
+        return { ok: 'home restored, audio still playing' };
+      })()
+
+  # Browser back must not push a second history entry.
+  - eval: |
+      (() => { history.back(); return { ok: 'popstate' }; })()
+  - waitFor: '.reader-deck'
+  - eval: |
+      (() => {
+        if (window.__navCount !== 2) throw new Error('popstate pushed a history entry');
+        return { ok: 'popstate did not push' };
+      })()
+
+  # The incoming page has exactly one keydown handler: one press, one card.
+  - eval: |
+      (() => {
+        const before = document.querySelector('.reader-top-count').textContent;
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        const after = document.querySelector('.reader-top-count').textContent;
+        if (before === after) throw new Error('arrow key did not navigate one card');
+        return { ok: 'one card per key press', before, after };
+      })()
