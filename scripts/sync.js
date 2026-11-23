@@ -50,7 +50,7 @@ function listenToggle() {
 function assetVersion() {
   const dir = path.join(__dirname, '..', 'assets');
   const hash = crypto.createHash('sha1');
-  for (const file of ['style.css', 'reader.js', 'home.js', 'theme.js', 'logo.png']) {
+  for (const file of ['style.css', 'reader.js', 'home.js', 'theme.js', 'app.js', 'logo.png']) {
     const file_path = path.join(dir, file);
     if (fs.existsSync(file_path)) hash.update(fs.readFileSync(file_path));
   }
@@ -126,6 +126,9 @@ ${body}
 </main>
 ${footer}
 <script src="${prefix}assets/theme.js?v=${assetVersion()}" defer></script>
+<script src="${prefix}assets/reader.js?v=${assetVersion()}" defer></script>
+<script src="${prefix}assets/home.js?v=${assetVersion()}" defer></script>
+<script src="${prefix}assets/app.js?v=${assetVersion()}" defer></script>
 </body>
 </html>
 `;
@@ -251,8 +254,7 @@ ${nextStory ? `    <a class="reader-next-post" href="../${nextStory.slug}/">
       <span class="next-post-arrow" aria-hidden="true">→</span>
     </a>` : ''}
 ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.source)}">Bài gốc</a></p>\n` : ''}  </article>
-  <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>
-  <script src="../../assets/reader.js?v=${assetVersion()}" defer></script>`;
+  <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>`;
     fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true, false, story.lead, false, hasLogo));
   }
 
@@ -306,8 +308,7 @@ ${story.cover ? `      <img class="cover-image" src="${esc(story.cover.replace('
       </div>
     </section>`).join('\n')}
   </div>
-  <button class="feed-next" aria-label="Truyện tiếp" type="button">↓</button>
-  <script src="assets/home.js?v=${assetVersion()}" defer></script>`
+  <button class="feed-next" aria-label="Truyện tiếp" type="button">↓</button>`
     : `${heading}  <p class="empty-state">${EMPTY_STATE}</p>`;
   fs.writeFileSync(path.join(outDir, 'index.html'), shell('Truyện', list, '', false, true, HOME_DESC, false, hasLogo));
 
