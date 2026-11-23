@@ -1,0 +1,53 @@
+# Browser check for the editorial cover-grid home page.
+# Serve this worktree over HTTP first:
+#   node /path/to/editorial-server.js <worktree> 8124
+#   node ~/pwterm/bin/pwterm.js run checks/editorial-home.yaml --var base=http://127.0.0.1:8124
+
+timeout: 120000
+vars:
+  base: 'http://127.0.0.1:8124'
+
+steps:
+  - setViewport: { width: 1024, height: 900 }
+  - goto: { url: '{{base}}/index.html', waitUntil: load }
+  - waitFor: '.cover-slide'
+  - eval: |
+      (() => {
+        const feed = document.querySelector('.cover-feed');
+        const style = getComputedStyle(feed);
+        if (style.display !== 'grid') throw new Error('feed is not a grid: ' + style.display);
+        const cols = style.gridTemplateColumns.split(' ').length;
+        if (cols < 2) throw new Error('expected multiple columns, got ' + cols);
+        if (style.scrollSnapType !== 'none') throw new Error('stale scroll snap: ' + style.scrollSnapType);
+        if (feed.classList.contains('feed-ready')) throw new Error('stale feed-ready class');
+        const next = document.querySelector('.feed-next');
+        if (next && getComputedStyle(next).display !== 'none') throw new Error('feed-next still visible');
+        const cards = [...document.querySelectorAll('.cover-slide')];
+        if (cards.length < 2) throw new Error('no stories to browse');
+        const ctas = cards.slice(0, cols).map((c) => c.querySelector('.cover-read').getBoundingClientRect().top);
+        if (Math.max(...ctas) - Math.min(...ctas) > 4) throw new Error('CTA buttons do not align: ' + ctas.join(', '));
+        return { ok: 'editorial grid', cols, cards: cards.length };
+      })()
+  - screenshot: artifacts/editorial-home.png
+
+  - eval: |
+      (() => { document.querySelector('.cover-read').click(); return { ok: 'open story' }; })()
+  - waitFor: '.reader-deck'
+  - eval: |
+      (() => {
+        if (location.pathname.indexOf('/posts/') < 0) throw new Error('SPA navigation failed');
+        return { ok: 'story opened from grid' };
+      })()
+
+  - setViewport: { width: 360, height: 780 }
+  - eval: |
+      (() => { history.back(); return { ok: 'back' }; })()
+  - waitFor: '.cover-feed'
+  - eval: |
+      (() => {
+        const feed = document.querySelector('.cover-feed');
+        const cols = getComputedStyle(feed).gridTemplateColumns.split(' ').length;
+        if (cols !== 1) throw new Error('expected one column on phone, got ' + cols);
+        if (document.documentElement.scrollWidth > innerWidth + 1) throw new Error('horizontal overflow');
+        return { ok: 'single-column phone grid' };
+      })()
