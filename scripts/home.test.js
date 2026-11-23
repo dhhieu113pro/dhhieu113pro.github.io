@@ -30,6 +30,12 @@ function loadHome(stored) {
   return { button, store };
 }
 
+test('home exposes an init/destroy lifecycle', () => {
+  loadHome();
+  assert.equal(typeof global.window.HomePage.init, 'function');
+  assert.equal(typeof global.window.HomePage.destroy, 'function');
+});
+
 test('home listen toggle reflects the stored preference', () => {
   const { button } = loadHome('1');
   assert.equal(button.attrs['aria-pressed'], 'true');
