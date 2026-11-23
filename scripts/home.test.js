@@ -32,6 +32,63 @@ function loadHome(stored) {
   return { button, store };
 }
 
+function loadFeed() {
+  const store = new Map();
+  const listen = {
+    attrs: {},
+    setAttribute(name, value) { this.attrs[name] = value; },
+    addEventListener() {},
+    classList: { toggle() {} },
+  };
+  const slides = [0, 1].map(() => ({
+    classList: { add() {}, remove() {} },
+    querySelector: (s) => (s === '.cover-image' ? { complete: true } : null),
+  }));
+  const feed = {
+    classes: new Set(),
+    classList: {
+      add: (name) => feed.classes.add(name),
+      contains: (name) => feed.classes.has(name),
+    },
+    querySelectorAll: (s) => (s === '.cover-slide' ? slides : []),
+  };
+  const count = { textContent: '' };
+  const next = { hidden: false };
+  let keydownListeners = 0;
+  let observers = 0;
+  global.localStorage = {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  };
+  global.document = {
+    querySelector: (selector) => ({
+      '.listen-toggle': listen,
+      '.cover-feed': feed,
+      '.feed-count': count,
+      '.feed-next': next,
+    })[selector] || null,
+    addEventListener: (type) => { if (type === 'keydown') keydownListeners++; },
+  };
+  global.window = {
+    matchMedia: () => ({ matches: false }),
+    IntersectionObserver: class { constructor() { observers++; } observe() {} disconnect() {} },
+  };
+  delete require.cache[HOME];
+  require(HOME);
+  global.window.HomePage.init(new AbortController().signal);
+  return { feed, count, next, get keydownListeners() { return keydownListeners; }, get observers() { return observers; } };
+}
+
+test('home shows a story total and no swipe machinery', () => {
+  const h = loadFeed();
+  assert.equal(h.count.textContent, '2 truyện');
+  assert.equal(h.feed.classList.contains('feed-ready'), false);
+  assert.equal(h.next.hidden, true);
+  assert.equal(h.observers, 0);
+  assert.equal(h.keydownListeners, 0);
+});
+
 test('home toggle is wired once, so one click is one toggle', () => {
   const { button } = loadHome('1');
   assert.equal(button.listenerCount, 1);
