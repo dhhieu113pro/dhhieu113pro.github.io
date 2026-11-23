@@ -58,5 +58,7 @@ steps:
           const el = document.querySelector(sel);
           if (el && el.getBoundingClientRect().height > 24) throw new Error(sel + ' wraps in the phone header');
         }
+        const linkColor = getComputedStyle(document.querySelector('.feed-link')).color;
+        if (linkColor === 'rgb(255, 255, 255)') throw new Error('nav link is white on the paper header');
         return { ok: 'single-column phone grid' };
       })()
