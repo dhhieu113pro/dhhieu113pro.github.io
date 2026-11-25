@@ -1,4 +1,4 @@
-import { LESSONS, findLesson } from './src/lessons.js';
+import { LESSONS, VIETNAMESE_LESSONS, findLesson } from './src/lessons.js';
 import { renderWorksheetSVG } from './src/worksheet.js';
 
 const byId = (id) => document.getElementById(id);
@@ -10,18 +10,23 @@ const groups = {
   align: byId('align'),
 };
 
-for (const lesson of LESSONS) {
-  const option = document.createElement('option');
-  option.value = lesson.id;
-  option.textContent = lesson.title;
-  selects.lesson.append(option);
-}
-
-const requested = decodeURIComponent(location.hash.slice(1)) || 'en-2-u3';
-selects.lesson.value = findLesson(LESSONS, requested).id;
+const lessonSets = { vi: VIETNAMESE_LESSONS, en: LESSONS };
 
 function value(id) {
   return selects[id] ? selects[id].value : groups[id].querySelector('button.active').dataset.value;
+}
+
+function fillLessons() {
+  const lessons = lessonSets[value('font')] ?? LESSONS;
+  selects.lesson.replaceChildren();
+  for (const lesson of lessons) {
+    const option = document.createElement('option');
+    option.value = lesson.id;
+    option.textContent = lesson.title;
+    selects.lesson.append(option);
+  }
+  const requested = decodeURIComponent(location.hash.slice(1));
+  selects.lesson.value = findLesson(lessons, requested).id;
 }
 
 function options() {
@@ -37,11 +42,12 @@ function options() {
 let fontBytes;
 
 function render() {
-  const lesson = findLesson(LESSONS, selects.lesson.value);
+  const lesson = findLesson(lessonSets[value('font')] ?? LESSONS, selects.lesson.value);
   byId('sheet').innerHTML = renderWorksheetSVG(lesson, options(), fontBytes);
 }
 
 async function init() {
+  fillLessons();
   const response = await fetch('assets/tieuhoc-vn.ttf');
   fontBytes = await response.arrayBuffer();
   if (document.fonts?.load) {
@@ -61,6 +67,7 @@ for (const group of Object.values(groups)) {
     for (const candidate of group.querySelectorAll('button')) {
       candidate.classList.toggle('active', candidate === button);
     }
+    if (group === groups.font) fillLessons();
     render();
   });
 }

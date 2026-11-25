@@ -64,3 +64,13 @@ test('tap-viet: typographic baseline is on the guideline and declared', () => {
   assert.match(js, /7\.38 \+ rowHeight;/);
   assert.match(js, /data-baseline=/);
 });
+
+test('tap-viet: font guide dashes are separated from letter ink', () => {
+  const font = fs.readFileSync(path.join(APP, 'src/font.js'), 'utf8');
+  const js = fs.readFileSync(path.join(APP, 'src/worksheet.js'), 'utf8');
+  const lessons = fs.readFileSync(path.join(APP, 'src/lessons.js'), 'utf8');
+  assert.match(font, /guideDots/);
+  assert.match(js, /class="ink"/);
+  assert.match(js, /stroke-width="0\.34"/);
+  assert.match(lessons, /VIETNAMESE_LESSONS/);
+});

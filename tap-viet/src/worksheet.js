@@ -1,4 +1,4 @@
-import { glyphPath, measureText } from './font.js';
+import { glyphPaths, measureText } from './font.js';
 
 const BASE_OPACITY = { bold: 1, mild: 0.65, light: 0.4 };
 const LEVELS = ['bold', 'mild', 'light'];
@@ -76,7 +76,7 @@ export function renderWorksheetSVG(lesson, options = {}, fontBytes) {
   const opacities = traceOpacities(safeLevel);
   const maxRows = Math.floor((289.62 - 7.38) / rowHeight);
   const samples = buildRows(lesson).slice(0, Math.floor(maxRows / 3));
-  const drawRows = (copy = 0) => samples
+  const drawRows = (copy = 0, color = '#c4bddc') => samples
     .map((row, i) => {
       const text = row.english ?? '';
       const width = fontBytes ? measureText(fontBytes, text, size) : text.length * size * 0.6;
@@ -85,17 +85,19 @@ export function renderWorksheetSVG(lesson, options = {}, fontBytes) {
           : 7.5;
       const y = startY + (i * 3 + copy) * rowHeight;
       if (!fontBytes || !text) return '';
-      return `<path d="${glyphPath(fontBytes, text, { x, y, size })}" data-baseline="${fmt(y)}"/>`;
+      const { ink, guide } = glyphPaths(fontBytes, text, { x, y, size });
+      const guides = outlined && guide
+        ? `<path class="guide" d="${guide}" fill="${color}" stroke="none" data-baseline="${fmt(y)}"/>`
+        : '';
+      return `<path class="ink" d="${ink}" data-baseline="${fmt(y)}"/>${guides}`;
     })
     .join('');
-  const model = `<g class="model" opacity="1" fill="#3d8fc6" stroke="none">${drawRows()}</g>`;
+  const model = `<g class="model" opacity="1" fill="#3d8fc6" stroke="none">${drawRows(0, '#3d8fc6')}</g>`;
   const traces = opacities
     .map((opacity, index) => {
       const fill = outlined ? 'none' : '#c4bddc';
       const stroke = outlined ? '#c4bddc' : 'none';
-      const strokeAttrs = outlined
-        ? ` stroke="${stroke}" stroke-width="0.18" stroke-dasharray="1.2 0.8" stroke-linecap="round"`
-        : '';
+      const strokeAttrs = outlined ? ' stroke-width="0.34"' : '';
       return `<g class="trace" opacity="${fmt(opacity)}" fill="${fill}" stroke="${stroke}"${strokeAttrs}>${drawRows(index + 1)}</g>`;
     })
     .join('');
