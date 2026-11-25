@@ -1,17 +1,44 @@
+import { glyphPath, measureText } from './font.js';
+
 const BASE_OPACITY = { bold: 1, mild: 0.65, light: 0.4 };
-const STYLES = ['solid', 'outline'];
 const LEVELS = ['bold', 'mild', 'light'];
 const PAPERS = ['oly4', 'oly5', 'ke7'];
-const ENTITIES = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-};
+const fmt = (n) => Number(n.toFixed(3)).toString();
 
-export function escapeHTML(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (char) => ENTITIES[char]);
+function line(x1, y1, x2, y2) {
+  return `M${fmt(x1)} ${fmt(y1)} L${fmt(x2)} ${fmt(y2)}`;
+}
+
+export function gridPaths(paper) {
+  const safePaper = PAPERS.includes(paper) ? paper : 'oly4';
+  const minor = [];
+  const major = [];
+  const top = 7.38;
+  const bottom = 289.62;
+  const left = 5;
+  const right = 205;
+
+  if (safePaper === 'ke7') {
+    for (let y = 7.38; y <= bottom + 1e-9; y += 7) major.push(line(left, y, right, y));
+    for (let y = 10.88; y <= bottom + 1e-9; y += 7) minor.push(line(left, y, right, y));
+  } else {
+    const row = safePaper === 'oly5' ? 20.16 : 10.08;
+    const sub = row / 4;
+    for (let y = top; y <= bottom + 1e-9; y += row) major.push(line(left, y, right, y));
+    for (let y = top + sub; y < bottom - 1e-9; y += sub) {
+      if (Math.abs(((y - top) / row) % 1) > 1e-9) minor.push(line(left, y, right, y));
+    }
+    major.push(line(left, bottom, right, bottom));
+    for (let x = left; x <= right + 1e-9; x += 10) major.push(line(x, top, x, bottom));
+    for (let x = left + 2.5; x < right - 1e-9; x += 2.5) {
+      if (Math.abs(((x - left) / 10) % 1) > 1e-9) minor.push(line(x, top, x, bottom));
+    }
+  }
+
+  return [
+    { d: minor.join(' '), stroke: '#b5d8ee', width: 0.17, fill: 'none' },
+    { d: major.join(' '), stroke: '#3d8fc6', width: 0.18, fill: 'none' },
+  ];
 }
 
 export function buildRows(lesson) {
@@ -33,41 +60,46 @@ export function traceOpacities(level) {
   return [base, +(base * 0.6).toFixed(2), +(base * 0.35).toFixed(2)];
 }
 
-export function traceClass(style, level) {
-  const safeStyle = STYLES.includes(style) ? style : 'solid';
-  const safeLevel = LEVELS.includes(level) ? level : 'bold';
-  return `trace trace--${safeStyle} trace--${safeLevel}`;
-}
-
-export function renderWorksheetHTML(lesson, options = {}) {
-  const { style, darkness, align, font, paper } = options ?? {};
-  const safeAlign = ['left', 'center', 'right'].includes(align) ? align : 'left';
-  const safeFont = font === 'vi' ? 'vi' : 'en';
+export function renderWorksheetSVG(lesson, options = {}, fontBytes) {
+  const { style, darkness, align, paper } = options ?? {};
   const safePaper = PAPERS.includes(paper) ? paper : 'oly4';
-  const classes = traceClass(style, darkness);
-  const opacities = traceOpacities(darkness);
-
-  const rows = buildRows(lesson)
-    .map((row) => {
-      const ipa = row.ipa ? `<span class="row__ipa">${escapeHTML(row.ipa)}</span>` : '';
-      const meaning = row.meaning
-        ? `<span class="row__meaning">${escapeHTML(row.meaning)}</span>`
-        : '';
-      const traces = opacities
-        .map(
-          (opacity) =>
-            `<div class="row__trace ${classes}" style="--trace-opacity:${opacity}">` +
-            `<span>${escapeHTML(row.english)}</span></div>`,
-        )
-        .join('');
-      return (
-        `<section class="row row--${row.kind}">` +
-        `<div class="row__model"><span class="row__english">${escapeHTML(row.english)}</span>${ipa}${meaning}</div>` +
-        traces +
-        '</section>'
-      );
+  const safeAlign = ['left', 'center', 'right'].includes(align) ? align : 'left';
+  const safeStyle = ['solid', 'outline'].includes(style) ? style : 'solid';
+  const safeLevel = LEVELS.includes(darkness) ? darkness : 'bold';
+  const outlined = safeStyle === 'outline';
+  const grid = gridPaths(safePaper)
+    .map((p) => `<path d="${p.d}" fill="${p.fill}" stroke="${p.stroke}" stroke-width="${p.width}"/>`)
+    .join('');
+  const rowHeight = safePaper === 'oly5' ? 20.16 : safePaper === 'ke7' ? 14 : 10.08;
+  const size = safePaper === 'oly5' ? 6 : safePaper === 'ke7' ? 3 : 3;
+  const startY = 15;
+  const opacities = traceOpacities(safeLevel);
+  const drawRows = (offset = 0) => buildRows(lesson)
+    .map((row, i) => {
+      const text = row.english ?? '';
+      const width = fontBytes ? measureText(fontBytes, text, size) : text.length * size * 0.6;
+      const x = safeAlign === 'center' ? 105 - width / 2
+        : safeAlign === 'right' ? 204.8 - width
+          : 7.5;
+      const y = startY + offset + i * rowHeight;
+      if (!fontBytes || !text) return '';
+      return `<path d="${glyphPath(fontBytes, text, { x, y, size })}"/>`;
     })
     .join('');
-
-  return `<div class="sheet__inner sheet--${safePaper} sheet--${safeAlign} sheet--font-${safeFont}">${rows}</div>`;
+  const model = `<g class="model" opacity="1" fill="#3d8fc6" stroke="none">${drawRows()}</g>`;
+  const traces = opacities
+    .map((opacity, index) => {
+      const fill = outlined ? 'none' : '#c4bddc';
+      const stroke = outlined ? '#c4bddc' : 'none';
+      const strokeAttrs = outlined
+        ? ` stroke="${stroke}" stroke-width="0.18" stroke-dasharray="1.2 0.8" stroke-linecap="round"`
+        : '';
+      return `<g class="trace" opacity="${fmt(opacity)}" fill="${fill}" stroke="${stroke}"${strokeAttrs}>${drawRows(index * rowHeight)}</g>`;
+    })
+    .join('');
+  return (
+    `<svg viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg">` +
+    `${grid}${model}${traces}</svg>`
+  );
 }
+
