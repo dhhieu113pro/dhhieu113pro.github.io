@@ -211,11 +211,45 @@ function contourPath(points, sx, sy, x, y) {
   return `${out}Z`;
 }
 
-export function glyphPath(fontBytes, text, { x = 0, y = 0, size = 5 } = {}) {
+// The handwriting font embeds thin dotted-guide dashes in every glyph. They are
+// guide strokes, not letter ink; solid rendering must not draw them.
+function isGuide(points, unitsPerEm) {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const point of points) {
+    min = Math.min(min, point.y);
+    max = Math.max(max, point.y);
+  }
+  return max - min <= unitsPerEm * 0.02;
+}
+
+// Guide dashes in the font are thin rectangles; render them as round dots
+// spaced along the stroke, the way tapviet123.com draws nét chấm guides.
+function guideDots(points, sx, x, y) {
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const min = Math.min(...xs);
+  const max = Math.max(...xs);
+  const centerY = y - (Math.min(...ys) + Math.max(...ys)) * sx / 2;
+  const width = (max - min) * sx;
+  const count = Math.max(1, Math.round(width / 0.45) + 1);
+  const radius = 0.12;
+  let out = '';
+  for (let i = 0; i < count; i++) {
+    const cx = fmt(x + min * sx + (count === 1 ? width / 2 : width * i / (count - 1)));
+    out += `M${fmt(Number(cx) - radius)} ${fmt(centerY)}` +
+      `a${radius} ${radius} 0 1 0 ${2 * radius} 0` +
+      `a${radius} ${radius} 0 1 0 ${-2 * radius} 0Z`;
+  }
+  return out;
+}
+
+export function glyphPaths(fontBytes, text, { x = 0, y = 0, size = 5 } = {}) {
   const font = parseFont(fontBytes);
   const sx = size / font.unitsPerEm;
   let cursor = x;
-  let out = '';
+  let ink = '';
+  let guide = '';
   for (const char of String(text)) {
     if (char === ' ' || char === '\n' || char === '\t') {
       cursor += font.advance(glyphIndex(font, 'a')) * sx * 0.5;
@@ -223,11 +257,20 @@ export function glyphPath(fontBytes, text, { x = 0, y = 0, size = 5 } = {}) {
     }
     const glyph = glyphIndex(font, char);
     for (const contour of contours(font, glyph)) {
-      out += contourPath(contour.points, sx, sx, cursor, y);
+      if (isGuide(contour.points, font.unitsPerEm)) {
+        guide += guideDots(contour.points, sx, cursor, y);
+      } else {
+        ink += contourPath(contour.points, sx, sx, cursor, y);
+      }
     }
     cursor += font.advance(glyph) * sx;
   }
-  return out;
+  return { ink, guide };
+}
+
+export function glyphPath(fontBytes, text, options = {}) {
+  const { ink, guide } = glyphPaths(fontBytes, text, options);
+  return ink + guide;
 }
 
 export function measureText(fontBytes, text, size = 5) {

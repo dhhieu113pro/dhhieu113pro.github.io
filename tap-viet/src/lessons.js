@@ -52,6 +52,37 @@ export const LESSONS = [
   },
 ];
 
+export const VIETNAMESE_LESSONS = [
+  {
+    id: 'vi-1-b1',
+    grade: 1,
+    title: 'Bài 1: Bảng chữ cái',
+    vocab: [
+      { word: 'a', ipa: '', meaning: '' },
+      { word: 'ă', ipa: '', meaning: '' },
+      { word: 'â', ipa: '', meaning: '' },
+    ],
+    sentences: [
+      { text: 'Bà bé đi học.', ipa: '', meaning: '' },
+      { text: 'Bé học chữ cái.', ipa: '', meaning: '' },
+    ],
+  },
+  {
+    id: 'vi-1-b4',
+    grade: 1,
+    title: 'Bài 4: Viết g hay gh',
+    vocab: [
+      { word: 'gà', ipa: '', meaning: '' },
+      { word: 'ghê', ipa: '', meaning: '' },
+      { word: 'ghi', ipa: '', meaning: '' },
+    ],
+    sentences: [
+      { text: 'Bà ghê nhà bé.', ipa: '', meaning: '' },
+      { text: 'Bé ghi bài.', ipa: '', meaning: '' },
+    ],
+  },
+];
+
 export function findLesson(lessons, id) {
   return lessons.find((lesson) => lesson.id === id) ?? lessons[0];
 }
