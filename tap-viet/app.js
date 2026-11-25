@@ -1,5 +1,5 @@
 import { LESSONS, findLesson } from './src/lessons.js';
-import { renderWorksheetHTML } from './src/worksheet.js';
+import { renderWorksheetSVG } from './src/worksheet.js';
 
 const byId = (id) => document.getElementById(id);
 const selects = {
@@ -21,19 +21,35 @@ for (const lesson of LESSONS) {
 const requested = decodeURIComponent(location.hash.slice(1)) || 'en-2-u3';
 selects.lesson.value = findLesson(LESSONS, requested).id;
 
-function render() {
-  const lesson = findLesson(LESSONS, selects.lesson.value);
-  byId('sheet').innerHTML = renderWorksheetHTML(lesson, {
+function options() {
+  return {
     style: selects.style.value,
     darkness: selects.darkness.value,
     paper: selects.paper.value,
     font: selects.font.value,
     align: selects.align.value,
-  });
+  };
+}
+
+let fontBytes;
+
+function render() {
+  const lesson = findLesson(LESSONS, selects.lesson.value);
+  byId('sheet').innerHTML = renderWorksheetSVG(lesson, options(), fontBytes);
+}
+
+async function init() {
+  const response = await fetch('assets/tieuhoc-vn.ttf');
+  fontBytes = await response.arrayBuffer();
+  if (document.fonts?.load) {
+    await document.fonts.load('5mm TieuhocVN');
+    await document.fonts.ready;
+  }
+  render();
 }
 
 for (const select of Object.values(selects)) {
   select.addEventListener('change', render);
 }
 byId('download').addEventListener('click', () => window.print());
-render();
+init();

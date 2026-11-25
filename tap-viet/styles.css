@@ -1,11 +1,15 @@
 :root {
-  --grid-line: #aab7c4;
-  --grid-mid: #dbe2e9;
   color-scheme: light;
 }
 
 * {
   box-sizing: border-box;
+}
+
+@font-face {
+  font-family: TieuhocVN;
+  src: url("assets/tieuhoc-vn.ttf") format("truetype");
+  font-display: block;
 }
 
 body {
@@ -61,158 +65,17 @@ body {
   cursor: pointer;
 }
 
-.sheet {
+#sheet {
   width: 210mm;
-  min-height: 297mm;
   margin: 10px auto;
-  padding: 10mm;
   background: #fff;
   box-shadow: 0 2px 12px rgb(0 0 0 / 12%);
 }
 
-.sheet__inner {
-  width: 100%;
-}
-
-.row {
-  position: relative;
-  height: 40.32mm;
-  overflow: hidden;
-  background-image:
-    repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 10.08mm),
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 2.52mm,
-      var(--grid-mid) 2.52mm calc(2.52mm + 1px),
-      transparent calc(2.52mm + 1px) 5.04mm
-    );
-}
-
-.sheet--oly4 .row {
-  height: 40.32mm;
-  background-image:
-    repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 10.08mm),
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 2.52mm,
-      var(--grid-mid) 2.52mm calc(2.52mm + 1px),
-      transparent calc(2.52mm + 1px) 5.04mm
-    );
-}
-
-.sheet--oly5 .row {
-  height: 80.64mm;
-  background-image:
-    repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 10.08mm),
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 2.52mm,
-      var(--grid-mid) 2.52mm calc(2.52mm + 1px),
-      transparent calc(2.52mm + 1px) 5.04mm
-    );
-}
-
-.sheet--ke7 .row {
-  height: 56mm;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--grid-line) 0 1px,
-    transparent 1px 7mm
-  );
-}
-
-.row__model,
-.row__trace {
-  display: flex;
-  align-items: center;
-  gap: 3mm;
-  height: 10.08mm;
-  padding: 0 3mm;
-  line-height: 1;
-  overflow: hidden;
-}
-
-.sheet--left .row__model,
-.sheet--left .row__trace {
-  justify-content: flex-start;
-}
-
-.sheet--center .row__model,
-.sheet--center .row__trace {
-  justify-content: center;
-}
-
-.sheet--right .row__model,
-.sheet--right .row__trace {
-  justify-content: flex-end;
-}
-
-.row__english,
-.row__trace span {
-  font-size: 8mm;
-  white-space: nowrap;
-}
-
-.sheet--font-en .row__english,
-.sheet--font-en .row__trace span {
-  font-family: "Comic Sans MS", "Segoe Print", cursive;
-}
-
-.sheet--font-vi .row__english,
-.sheet--font-vi .row__trace span {
-  font-family: "Times New Roman", serif;
-}
-
-.sheet__inner.sheet--oly4 .row__english,
-.sheet__inner.sheet--oly4 .row__trace span {
-  font-size: 5mm;
-}
-
-.sheet__inner.sheet--oly5 .row__english,
-.sheet__inner.sheet--oly5 .row__trace span {
-  font-size: 10mm;
-}
-
-.sheet__inner.sheet--ke7 .row__english,
-.sheet__inner.sheet--ke7 .row__trace span {
-  font-size: 5mm;
-}
-
-.sheet--oly5 .row__model,
-.sheet--oly5 .row__trace {
-  height: 20.16mm;
-}
-
-.sheet--ke7 .row__model,
-.sheet--ke7 .row__trace {
-  height: 14mm;
-}
-
-.row__ipa {
-  color: #6b7280;
-  font-size: 3.5mm;
-}
-
-.row__meaning {
-  color: #9ca3af;
-  font-size: 3.5mm;
-}
-
-.row--title .row__english {
-  font-weight: 700;
-}
-
-.row__trace {
-  opacity: var(--trace-opacity, 1);
-}
-
-.trace--solid span {
-  color: #111827;
-}
-
-.trace--outline span {
-  color: transparent;
-  -webkit-text-stroke: 0.35px #111827;
+#sheet svg {
+  display: block;
+  width: 210mm;
+  height: 297mm;
 }
 
 @page {
@@ -232,16 +95,10 @@ body {
     display: none !important;
   }
 
-  .sheet {
+  #sheet {
     width: 210mm;
-    min-height: 297mm;
     margin: 0;
-    padding: 0;
     box-shadow: none;
-  }
-
-  .row {
-    break-inside: avoid;
   }
 
   * {

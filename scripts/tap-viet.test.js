@@ -6,7 +6,15 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
 const APP = path.join(ROOT, 'tap-viet');
-const RUNTIME = ['index.html', 'app.js', 'styles.css', 'src/lessons.js', 'src/worksheet.js'];
+const RUNTIME = [
+  'index.html',
+  'app.js',
+  'styles.css',
+  'src/lessons.js',
+  'src/worksheet.js',
+  'src/font.js',
+  'assets/tieuhoc-vn.ttf',
+];
 
 test('tap-viet: all runtime files are deployed and non-empty', () => {
   for (const file of RUNTIME) {
