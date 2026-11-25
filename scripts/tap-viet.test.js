@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 const ROOT = path.resolve(__dirname, '..');
 const APP = path.join(ROOT, 'tap-viet');
@@ -73,4 +74,22 @@ test('tap-viet: font guide dashes are separated from letter ink', () => {
   assert.match(js, /class="ink"/);
   assert.match(js, /stroke-width="0\.34"/);
   assert.match(lessons, /VIETNAMESE_LESSONS/);
+});
+
+test('tap-viet: composite glyph diacritics stay within their advance', async () => {
+  const file = fs.readFileSync(path.join(APP, 'assets/tieuhoc-vn.ttf'));
+  const bytes = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
+  const { glyphPaths, measureText } = await import(pathToFileURL(path.join(APP, 'src/font.js')).href);
+  const bounds = (d) => {
+    const nums = [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map(Number);
+    const xs = nums.filter((_, i) => i % 2 === 0);
+    return { min: Math.min(...xs), max: Math.max(...xs) };
+  };
+  for (const ch of 'ữẽẹếìđơõạBà') {
+    const { ink } = glyphPaths(bytes, ch, { size: 5 });
+    const advance = measureText(bytes, ch, 5);
+    const { min, max } = bounds(ink);
+    assert.ok(min >= -1 && max <= advance + 1,
+      `${ch}: ink ${min}..${max} outside advance ${advance}`);
+  }
 });

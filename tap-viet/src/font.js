@@ -159,8 +159,8 @@ function contours(font, glyph, depth = 0) {
       dy = i16(d, p + 2);
       p += 4;
     } else {
-      dx = i16(d, p);
-      dy = i16(d, p + 1);
+      dx = (d[p] << 24) >> 24;
+      dy = (d[p + 1] << 24) >> 24;
       p += 2;
     }
     const args = { dx, dy };
