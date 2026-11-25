@@ -75,6 +75,13 @@ node --test scripts/sync.test.js
 node scripts/sync.js --db /path/to/stories.sqlite --out /path/to/output
 ```
 
+## Tập viết
+
+`/tap-viet/` is a pure static worksheet app (HTML/CSS/ES modules, no server
+or build step). Its files live in the `tap-viet/` folder, copied from the
+[`tapviet`](https://github.com/dhhieu113pro/tapviet) repo. Story sync only
+rewrites `posts/` and `assets/img/`, so it never touches this folder.
+
 ## Theme
 
 The top bar on every page has a theme button that cycles **Sáng → Tối → Tự
