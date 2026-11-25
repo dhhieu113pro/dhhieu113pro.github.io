@@ -93,3 +93,16 @@ test('tap-viet: composite glyph diacritics stay within their advance', async () 
       `${ch}: ink ${min}..${max} outside advance ${advance}`);
   }
 });
+
+test('tap-viet: cursive glyphs are spaced apart', async () => {
+  const file = fs.readFileSync(path.join(APP, 'assets/tieuhoc-vn.ttf'));
+  const bytes = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
+  const { glyphPaths, measureText } = await import(pathToFileURL(path.join(APP, 'src/font.js')).href);
+  // Native advance for 'i' at size 5 is 1.313 mm; cursive swashes need more room.
+  const advance = measureText(bytes, 'i', 5);
+  assert.ok(advance > 1.5, `advance ${advance} still has touching swashes`);
+  const maxX = (d) => Math.max(...[...d.matchAll(/-?\d+(?:\.\d+)?/g)].map(Number).filter((_, i) => i % 2 === 0));
+  const step = maxX(glyphPaths(bytes, 'ii', { size: 5 }).ink) - maxX(glyphPaths(bytes, 'i', { size: 5 }).ink);
+  assert.ok(step > 1.5, `rendered step ${step} still has touching swashes`);
+  assert.ok(Math.abs(step - advance) < 0.2, `rendered step ${step} disagrees with advance ${advance}`);
+});
