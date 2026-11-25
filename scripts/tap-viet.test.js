@@ -50,3 +50,11 @@ test('tap-viet: story sync never deletes the deployed app', () => {
   assert.ok(removals.length > 0);
   for (const removal of removals) assert.ok(!removal.includes('tap-viet'), removal);
 });
+
+test('tap-viet: deployed page has the grouped settings sidebar', () => {
+  const html = fs.readFileSync(path.join(APP, 'index.html'), 'utf8');
+  assert.match(html, /<aside class="settings">/);
+  assert.match(html, /id="style" class="segmented"/);
+  const app = fs.readFileSync(path.join(APP, 'app.js'), 'utf8');
+  assert.match(app, /button\.active/);
+});

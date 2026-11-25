@@ -57,7 +57,7 @@ export function buildRows(lesson) {
 
 export function traceOpacities(level) {
   const base = BASE_OPACITY[level] ?? BASE_OPACITY.bold;
-  return [base, +(base * 0.6).toFixed(2), +(base * 0.35).toFixed(2)];
+  return [base, +(base * 0.6).toFixed(2)];
 }
 
 export function renderWorksheetSVG(lesson, options = {}, fontBytes) {
@@ -71,17 +71,19 @@ export function renderWorksheetSVG(lesson, options = {}, fontBytes) {
     .map((p) => `<path d="${p.d}" fill="${p.fill}" stroke="${p.stroke}" stroke-width="${p.width}"/>`)
     .join('');
   const rowHeight = safePaper === 'oly5' ? 20.16 : safePaper === 'ke7' ? 14 : 10.08;
-  const size = safePaper === 'oly5' ? 6 : safePaper === 'ke7' ? 3 : 3;
-  const startY = 15;
+  const size = safePaper === 'oly5' ? 10 : safePaper === 'ke7' ? 7 : 5;
+  const startY = 7.38 + rowHeight * 0.6;
   const opacities = traceOpacities(safeLevel);
-  const drawRows = (offset = 0) => buildRows(lesson)
+  const maxRows = Math.floor((289.62 - 7.38) / rowHeight);
+  const samples = buildRows(lesson).slice(0, Math.floor(maxRows / 3));
+  const drawRows = (copy = 0) => samples
     .map((row, i) => {
       const text = row.english ?? '';
       const width = fontBytes ? measureText(fontBytes, text, size) : text.length * size * 0.6;
       const x = safeAlign === 'center' ? 105 - width / 2
         : safeAlign === 'right' ? 204.8 - width
           : 7.5;
-      const y = startY + offset + i * rowHeight;
+      const y = startY + (i * 3 + copy) * rowHeight;
       if (!fontBytes || !text) return '';
       return `<path d="${glyphPath(fontBytes, text, { x, y, size })}"/>`;
     })
@@ -94,7 +96,7 @@ export function renderWorksheetSVG(lesson, options = {}, fontBytes) {
       const strokeAttrs = outlined
         ? ` stroke="${stroke}" stroke-width="0.18" stroke-dasharray="1.2 0.8" stroke-linecap="round"`
         : '';
-      return `<g class="trace" opacity="${fmt(opacity)}" fill="${fill}" stroke="${stroke}"${strokeAttrs}>${drawRows(index * rowHeight)}</g>`;
+      return `<g class="trace" opacity="${fmt(opacity)}" fill="${fill}" stroke="${stroke}"${strokeAttrs}>${drawRows(index + 1)}</g>`;
     })
     .join('');
   return (

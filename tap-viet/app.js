@@ -2,12 +2,11 @@ import { LESSONS, findLesson } from './src/lessons.js';
 import { renderWorksheetSVG } from './src/worksheet.js';
 
 const byId = (id) => document.getElementById(id);
-const selects = {
-  lesson: byId('lesson'),
+const selects = { lesson: byId('lesson'), paper: byId('paper') };
+const groups = {
+  font: byId('font'),
   style: byId('style'),
   darkness: byId('darkness'),
-  paper: byId('paper'),
-  font: byId('font'),
   align: byId('align'),
 };
 
@@ -21,13 +20,17 @@ for (const lesson of LESSONS) {
 const requested = decodeURIComponent(location.hash.slice(1)) || 'en-2-u3';
 selects.lesson.value = findLesson(LESSONS, requested).id;
 
+function value(id) {
+  return selects[id] ? selects[id].value : groups[id].querySelector('button.active').dataset.value;
+}
+
 function options() {
   return {
-    style: selects.style.value,
-    darkness: selects.darkness.value,
-    paper: selects.paper.value,
-    font: selects.font.value,
-    align: selects.align.value,
+    style: value('style'),
+    darkness: value('darkness'),
+    paper: value('paper'),
+    font: value('font'),
+    align: value('align'),
   };
 }
 
@@ -50,6 +53,16 @@ async function init() {
 
 for (const select of Object.values(selects)) {
   select.addEventListener('change', render);
+}
+for (const group of Object.values(groups)) {
+  group.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-value]');
+    if (!button) return;
+    for (const candidate of group.querySelectorAll('button')) {
+      candidate.classList.toggle('active', candidate === button);
+    }
+    render();
+  });
 }
 byId('download').addEventListener('click', () => window.print());
 init();

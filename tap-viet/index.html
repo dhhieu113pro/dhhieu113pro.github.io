@@ -12,51 +12,68 @@
       <p>Tạo chữ nét đứt trên giấy ô ly · tải PDF A4</p>
     </header>
 
-    <nav class="controls" aria-label="Tùy chọn">
-      <label>Mẫu bài <select id="lesson"></select></label>
-      <label>
-        Kiểu nét
-        <select id="style">
-          <option value="solid">Nét liền</option>
-          <option value="outline">Nét chấm</option>
-        </select>
-      </label>
-      <label>
-        Độ đậm
-        <select id="darkness">
-          <option value="bold">Đậm</option>
-          <option value="mild">Mờ 1</option>
-          <option value="light">Mờ 2</option>
-        </select>
-      </label>
-      <label>
-        Loại vở
-        <select id="paper">
-          <option value="oly4">4 ô ly (tiểu học)</option>
-          <option value="oly5">5 ô ly (tiểu học)</option>
-          <option value="ke7">Kẻ ngang 7mm (cấp 2)</option>
-        </select>
-      </label>
-      <label>
-        Font chữ
-        <select id="font">
-          <option value="en">Tiếng Anh</option>
-          <option value="vi">Tiếng Việt</option>
-        </select>
-      </label>
-      <label>
-        Căn lề
-        <select id="align">
-          <option value="left">Trái</option>
-          <option value="center">Giữa</option>
-          <option value="right">Phải</option>
-        </select>
-      </label>
-      <button id="download" type="button">Tải file PDF</button>
-    </nav>
+    <div class="layout">
+      <main class="sheet-column">
+        <p class="hint">Khi in: khổ A4, tỉ lệ 100% (Actual size) để ô to đúng 10mm.</p>
+        <div class="sheet" id="sheet" aria-label="Bảng tập viết"></div>
+      </main>
 
-    <p class="hint">Khi in: khổ A4, tỉ lệ 100% (Actual size) để ô to đúng 10mm.</p>
-    <main class="sheet" id="sheet" aria-label="Bảng tập viết"></main>
+      <aside class="settings">
+        <h2>Cài đặt trang</h2>
+
+        <label class="field">
+          Loại vở
+          <select id="paper">
+            <option value="oly4">4 ô ly (tiểu học)</option>
+            <option value="oly5">5 ô ly (tiểu học)</option>
+            <option value="ke7">Kẻ ngang 7mm (cấp 2)</option>
+          </select>
+        </label>
+
+        <div class="field">
+          <span class="field-label">Font chữ</span>
+          <div id="font" class="segmented" role="group" aria-label="Font chữ">
+            <button type="button" data-value="vi" class="active">Tiếng Việt</button>
+            <button type="button" data-value="en">Tiếng Anh</button>
+          </div>
+        </div>
+
+        <label class="field">
+          Mẫu bài
+          <select id="lesson"></select>
+        </label>
+
+        <hr />
+
+        <div class="field">
+          <span class="field-label">Kiểu nét</span>
+          <div id="style" class="segmented" role="group" aria-label="Kiểu nét">
+            <button type="button" data-value="solid" class="active">Nét liền</button>
+            <button type="button" data-value="outline">Nét chấm</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Độ đậm</span>
+          <div id="darkness" class="segmented" role="group" aria-label="Độ đậm">
+            <button type="button" data-value="bold" class="active">Đậm</button>
+            <button type="button" data-value="mild">Mờ 1</button>
+            <button type="button" data-value="light">Mờ 2</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Căn lề</span>
+          <div id="align" class="segmented" role="group" aria-label="Căn lề">
+            <button type="button" data-value="left" class="active">Trái</button>
+            <button type="button" data-value="center">Giữa</button>
+            <button type="button" data-value="right">Phải</button>
+          </div>
+        </div>
+
+        <button id="download" class="download" type="button">Tải file PDF</button>
+      </aside>
+    </div>
 
     <script type="module" src="app.js"></script>
   </body>
