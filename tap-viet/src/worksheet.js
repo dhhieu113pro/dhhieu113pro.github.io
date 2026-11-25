@@ -72,7 +72,7 @@ export function renderWorksheetSVG(lesson, options = {}, fontBytes) {
     .join('');
   const rowHeight = safePaper === 'oly5' ? 20.16 : safePaper === 'ke7' ? 14 : 10.08;
   const size = safePaper === 'oly5' ? 10 : safePaper === 'ke7' ? 7 : 5;
-  const startY = 7.38 + rowHeight * 0.6;
+  const startY = 7.38 + rowHeight - size * 0.6;
   const opacities = traceOpacities(safeLevel);
   const maxRows = Math.floor((289.62 - 7.38) / rowHeight);
   const samples = buildRows(lesson).slice(0, Math.floor(maxRows / 3));

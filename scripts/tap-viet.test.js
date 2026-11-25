@@ -58,3 +58,8 @@ test('tap-viet: deployed page has the grouped settings sidebar', () => {
   const app = fs.readFileSync(path.join(APP, 'app.js'), 'utf8');
   assert.match(app, /button\.active/);
 });
+
+test('tap-viet: handwriting is aligned to the bottom grid line', () => {
+  const js = fs.readFileSync(path.join(APP, 'src/worksheet.js'), 'utf8');
+  assert.match(js, /7\.38 \+ rowHeight - size \* 0\.6/);
+});
