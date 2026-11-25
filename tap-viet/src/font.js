@@ -3,6 +3,8 @@ const i16 = (d, o) => (u16(d, o) << 16) >> 16;
 const u32 = (d, o) => ((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]) >>> 0;
 const f2dot14 = (d, o) => i16(d, o) / 16384;
 const fmt = (n) => Number(n.toFixed(3)).toString();
+// The font's cursive swashes touch at native advances; space them for legibility.
+const TRACKING = 1.3;
 const cache = new WeakMap();
 
 function parseFont(bytes) {
@@ -252,7 +254,7 @@ export function glyphPaths(fontBytes, text, { x = 0, y = 0, size = 5 } = {}) {
   let guide = '';
   for (const char of String(text)) {
     if (char === ' ' || char === '\n' || char === '\t') {
-      cursor += font.advance(glyphIndex(font, 'a')) * sx * 0.5;
+      cursor += font.advance(glyphIndex(font, 'a')) * sx * 0.5 * TRACKING;
       continue;
     }
     const glyph = glyphIndex(font, char);
@@ -263,7 +265,7 @@ export function glyphPaths(fontBytes, text, { x = 0, y = 0, size = 5 } = {}) {
         ink += contourPath(contour.points, sx, sx, cursor, y);
       }
     }
-    cursor += font.advance(glyph) * sx;
+    cursor += font.advance(glyph) * sx * TRACKING;
   }
   return { ink, guide };
 }
@@ -279,9 +281,9 @@ export function measureText(fontBytes, text, size = 5) {
   let width = 0;
   for (const char of String(text)) {
     if (char === ' ' || char === '\n' || char === '\t') {
-      width += font.advance(glyphIndex(font, 'a')) * sx * 0.5;
+      width += font.advance(glyphIndex(font, 'a')) * sx * 0.5 * TRACKING;
     } else {
-      width += font.advance(glyphIndex(font, char)) * sx;
+      width += font.advance(glyphIndex(font, char)) * sx * TRACKING;
     }
   }
   return width;
