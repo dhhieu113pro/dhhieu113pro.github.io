@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tập viết 123 — Bảng tập viết ô ly</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>Tập viết 123</h1>
+      <p>Tạo chữ nét đứt trên giấy ô ly · tải PDF A4</p>
+    </header>
+
+    <nav class="controls" aria-label="Tùy chọn">
+      <label>Mẫu bài <select id="lesson"></select></label>
+      <label>
+        Kiểu nét
+        <select id="style">
+          <option value="solid">Nét liền</option>
+          <option value="outline">Nét chấm</option>
+        </select>
+      </label>
+      <label>
+        Độ đậm
+        <select id="darkness">
+          <option value="bold">Đậm</option>
+          <option value="mild">Mờ 1</option>
+          <option value="light">Mờ 2</option>
+        </select>
+      </label>
+      <label>
+        Loại vở
+        <select id="paper">
+          <option value="oly4">4 ô ly (tiểu học)</option>
+          <option value="oly5">5 ô ly (tiểu học)</option>
+          <option value="ke7">Kẻ ngang 7mm (cấp 2)</option>
+        </select>
+      </label>
+      <label>
+        Font chữ
+        <select id="font">
+          <option value="en">Tiếng Anh</option>
+          <option value="vi">Tiếng Việt</option>
+        </select>
+      </label>
+      <label>
+        Căn lề
+        <select id="align">
+          <option value="left">Trái</option>
+          <option value="center">Giữa</option>
+          <option value="right">Phải</option>
+        </select>
+      </label>
+      <button id="download" type="button">Tải file PDF</button>
+    </nav>
+
+    <p class="hint">Khi in: khổ A4, tỉ lệ 100% (Actual size) để ô to đúng 10mm.</p>
+    <main class="sheet" id="sheet" aria-label="Bảng tập viết"></main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
