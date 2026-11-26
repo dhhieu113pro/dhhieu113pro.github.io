@@ -1,0 +1,38 @@
+{
+  "kokoro": {
+    "engine": {
+      "url": "https://github.com/dhhieu113pro/dhhieu113pro.github.io/releases/download/tts-engines-v1/kokoro-engine.zip",
+      "bytes": 302426485,
+      "sha256": "185e2fbe7edecb7c431023d9d9dab38083ab95f0e02808e4c973061586fad43d"
+    },
+    "voices": {
+      "url": "https://github.com/dhhieu113pro/dhhieu113pro.github.io/releases/download/tts-engines-v1/kokoro-voices.zip",
+      "bytes": 13481053,
+      "sha256": "63dd698c04c448ae6b639ca587beb0cb022d505e885144290c55908a81f35b4b"
+    }
+  },
+  "vieneu-turbo": {
+    "engine": {
+      "url": "https://github.com/dhhieu113pro/dhhieu113pro.github.io/releases/download/tts-engines-v1/vieneu-turbo-engine.zip",
+      "bytes": 405284576,
+      "sha256": "652ef8beb07edb7cf079def0011acd2ad9c3475eebb1a6bf1306868f958b4779"
+    },
+    "voices": {
+      "url": "https://github.com/dhhieu113pro/dhhieu113pro.github.io/releases/download/tts-engines-v1/vieneu-turbo-voices.zip",
+      "bytes": 97273,
+      "sha256": "e5b3dfcd4272564fd6b26e3adc6582fef02dbc7cd3fbd417c23a6c942f87686e"
+    }
+  },
+  "supertonic-3": {
+    "engine": {
+      "url": "https://github.com/dhhieu113pro/dhhieu113pro.github.io/releases/download/tts-engines-v1/supertonic-3-engine.zip",
+      "bytes": 371171475,
+      "sha256": "60db7bc12b53bf3bf36e82b9115a780dcb0ddf501eb23699ba7b96bbcdd75528"
+    },
+    "voices": {
+      "url": "https://github.com/dhhieu113pro/dhhieu113pro.github.io/releases/download/tts-engines-v1/supertonic-3-voices.zip",
+      "bytes": 1336733,
+      "sha256": "d6d82a734549d65029533babae91eb069633f751790452ced0dc1cf59f74b7e8"
+    }
+  }
+}
