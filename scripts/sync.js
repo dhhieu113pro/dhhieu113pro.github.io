@@ -91,6 +91,11 @@ function fmtDate(iso) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
 }
 
+function absoluteAsset(url) {
+  const clean = String(url || '').replace(/^(\.\.\/)+/, '');
+  return clean ? `${SITE_URL}/${clean}` : '';
+}
+
 function shell(title, body, prefix, lockZoom = false, bare = false, description = '', showToggle = false, logo = false) {
   const root = prefix || './';
   const viewport = lockZoom
@@ -209,6 +214,7 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
     });
   }
 
+  const catalogDocuments = [];
   for (let storyIndex = 0; storyIndex < stories.length; storyIndex++) {
     const story = stories[storyIndex];
     const nextStory = stories.length > 1 ? stories[(storyIndex + 1) % stories.length] : null;
@@ -222,15 +228,24 @@ function syncStories({ dbPath = DEFAULT_DB, outDir = DEFAULT_OUT } = {}) {
       && Array.from({ length: sentenceCount }, (_, i) => path.join(audioDir, `${String(i).padStart(3, '0')}.mp3`))
         .every((file) => fs.existsSync(file));
     if (!hasAudio) console.error(`sync: ${story.slug} has no current audio — run node scripts/audio.js`);
+    const catalogParts = [];
     let sentenceIndex = 0;
     const cardsHtml = story.parts.map((part) => {
+      const catalogSentences = [];
       const lines = sentences(part.text)
         .map((line) => {
           const at = String(sentenceIndex++).padStart(3, '0');
           const audio = hasAudio ? ` data-audio="../../assets/audio/${story.slug}/${at}.mp3"` : '';
+          if (hasAudio) {
+            catalogSentences.push({
+              text: line,
+              audio: `${SITE_URL}/assets/audio/${story.slug}/${at}.mp3`,
+            });
+          }
           return `          <span class="sentence"${audio}>${esc(line)}</span>`;
         })
         .join('\n');
+      catalogParts.push({ image: absoluteAsset(part.image), sentences: catalogSentences });
       return `      <section class="reader-card">
         <div class="card-media">${part.image ? `<img class="card-image" src="${esc(part.image)}" alt="">` : ''}</div>
         <div class="card-body"><div class="card-text">
@@ -239,6 +254,17 @@ ${lines}
         <span class="scroll-hint" aria-hidden="true">↓</span>
       </section>`;
     }).join('\n');
+    if (hasAudio) {
+      catalogDocuments.push({
+        id: story.slug,
+        title: story.title,
+        author: story.byline,
+        date: story.date,
+        cover: absoluteAsset(story.cover),
+        source: story.source,
+        sections: catalogParts,
+      });
+    }
     const dotsHtml = story.parts.map((part, index) =>
       `        <button class="reader-dot" type="button" aria-label="Phần ${index + 1}"${index === 0 ? ' aria-current="true"' : ''}></button>`
     ).join('\n');
@@ -268,6 +294,11 @@ ${story.source ? `    <p class="story-source">Nguồn: <a href="${esc(story.sour
   <nav class="back-link"><a href="../../">← Tất cả truyện</a></nav>`;
     fs.writeFileSync(path.join(dir, 'index.html'), shell(story.title, body, '../../', true, false, story.lead, false, hasLogo));
   }
+
+  fs.writeFileSync(
+    path.join(outDir, 'catalog.json'),
+    `${JSON.stringify({ version: 1, documents: catalogDocuments }, null, 2)}\n`,
+  );
 
   // Topic index page: group stories by keyword topic.
   const groups = new Map(TOPICS.map((t) => [t.name, []]));

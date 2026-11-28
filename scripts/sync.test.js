@@ -593,3 +593,50 @@ test('every page carries the persistent mini player in the shell', () => {
     assert.ok(html.indexOf('class="mini-player"') < html.indexOf('assets/theme.js'));
   }
 });
+
+function catalog(outDir) {
+  return JSON.parse(fs.readFileSync(path.join(outDir, 'catalog.json'), 'utf8'));
+}
+
+test('sync writes a catalog with absolute audio and image URLs', () => {
+  const { outDir } = setupAudio();
+  const data = catalog(outDir);
+  assert.equal(data.version, 1);
+  assert.equal(data.documents.length, 1);
+  const doc = data.documents[0];
+  assert.equal(doc.id, 'a-story');
+  assert.equal(doc.title, 'Tiêu đề');
+  assert.equal(doc.author, 'Tác giả');
+  assert.match(doc.cover, /^https:\/\/termux\.io\.vn\/assets\/img\/a-story\//);
+  assert.equal(doc.sections.length, 1);
+  assert.deepEqual(doc.sections[0].sentences.map((s) => s.text), ['Một.', 'Hai.']);
+  assert.match(doc.sections[0].sentences[0].audio, /^https:\/\/termux\.io\.vn\/assets\/audio\/a-story\/000\.mp3$/);
+  assert.match(doc.sections[0].sentences[1].audio, /^https:\/\/termux\.io\.vn\/assets\/audio\/a-story\/001\.mp3$/);
+  assert.match(doc.sections[0].image, /^https:\/\/termux\.io\.vn\/assets\/img\//);
+});
+
+test('sync omits stories without current audio from the catalog', () => {
+  for (const options of [{ hash: false }, { mp3s: false }]) {
+    const { outDir } = setupAudio(options);
+    assert.deepEqual(catalog(outDir).documents, []);
+  }
+});
+
+test('catalog sentences keep raw text with entities intact', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-catalog-'));
+  const s = story();
+  s.record.parts[1].text = 'a & b "quoted"';
+  const dbPath = makeFixture({ dir, stories: [s] });
+  const outDir = path.join(dir, 'site');
+  fs.mkdirSync(outDir, { recursive: true });
+  const audioDir = path.join(outDir, 'assets', 'audio', s.slug);
+  fs.mkdirSync(audioDir, { recursive: true });
+  fs.writeFileSync(path.join(audioDir, '.text'), sentenceHash(s.record));
+  fs.writeFileSync(path.join(audioDir, '000.mp3'), 'fake');
+  fs.writeFileSync(path.join(audioDir, '001.mp3'), 'fake');
+  syncStories({ dbPath, outDir });
+  assert.deepEqual(
+    catalog(outDir).documents[0].sections[0].sentences.map((x) => x.text),
+    ['a & b "quoted"'],
+  );
+});
